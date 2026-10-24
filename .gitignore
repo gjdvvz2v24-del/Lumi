@@ -1,0 +1,9 @@
+**/build/
+**/managed_components/
+**/__pycache__/
+*.pyc
+.DS_Store
+.env
+.env.*
+*.log
+**/sdkconfig.old

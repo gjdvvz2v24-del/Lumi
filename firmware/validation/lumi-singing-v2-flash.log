@@ -1,0 +1,117 @@
+Lumi 2.9.3-singing: aktualizacja aplikacji i promptfs, poprawiony prompt i oddzielna obsługa śpiewu.
+bober_s3r_openai.bin: OK
+partition-table.bin: OK
+promptfs.bin: OK
+esptool.py v4.12.0
+Serial port /dev/cu.usbmodem1101
+Connecting...
+Chip is ESP32-S3-PICO-1 (LGA56) (revision v0.2)
+Features: WiFi, BLE, Embedded Flash 8MB (GD), Embedded PSRAM 8MB (AP_3v3)
+Crystal is 40MHz
+USB mode: USB-Serial/JTAG
+MAC: 98:88:e0:0f:30:b0
+Uploading stub...
+Running stub...
+Stub running...
+Configuring flash size...
+3072 (100 %)
+3072 (100 %)
+Read 3072 bytes at 0x00008000 in 0.3 seconds (91.4 kbit/s)...
+Hard resetting via RTS pin...
+esptool.py v4.12.0
+Serial port /dev/cu.usbmodem1101
+Connecting...
+Chip is ESP32-S3-PICO-1 (LGA56) (revision v0.2)
+Features: WiFi, BLE, Embedded Flash 8MB (GD), Embedded PSRAM 8MB (AP_3v3)
+Crystal is 40MHz
+USB mode: USB-Serial/JTAG
+MAC: 98:88:e0:0f:30:b0
+Uploading stub...
+Running stub...
+Stub running...
+Configuring flash size...
+Flash will be erased from 0x00010000 to 0x001ebfff...
+Flash will be erased from 0x007e0000 to 0x007fffff...
+Compressed 1945632 bytes to 1196011...
+Writing at 0x00010000... (1 %)
+Writing at 0x0001ca53... (2 %)
+Writing at 0x0002a511... (4 %)
+Writing at 0x00032644... (5 %)
+Writing at 0x000385d0... (6 %)
+Writing at 0x0003e50d... (8 %)
+Writing at 0x00044366... (9 %)
+Writing at 0x0004a177... (10 %)
+Writing at 0x0004ef48... (12 %)
+Writing at 0x00053779... (13 %)
+Writing at 0x00057eaf... (15 %)
+Writing at 0x0005e106... (16 %)
+Writing at 0x00062624... (17 %)
+Writing at 0x00066c93... (19 %)
+Writing at 0x0006b731... (20 %)
+Writing at 0x00071039... (21 %)
+Writing at 0x00075234... (23 %)
+Writing at 0x0007a8e1... (24 %)
+Writing at 0x00084c24... (26 %)
+Writing at 0x00088e65... (27 %)
+Writing at 0x0008d07b... (28 %)
+Writing at 0x0009b512... (30 %)
+Writing at 0x000b0d5d... (31 %)
+Writing at 0x000b58cf... (32 %)
+Writing at 0x000c6d38... (34 %)
+Writing at 0x000cb88e... (35 %)
+Writing at 0x000d075f... (36 %)
+Writing at 0x000d5c29... (38 %)
+Writing at 0x000dd0fd... (39 %)
+Writing at 0x000e8fda... (41 %)
+Writing at 0x000eefa5... (42 %)
+Writing at 0x000f4e80... (43 %)
+Writing at 0x000fb38e... (45 %)
+Writing at 0x00100f7f... (46 %)
+Writing at 0x00106f04... (47 %)
+Writing at 0x0010c9ff... (49 %)
+Writing at 0x00112ed5... (50 %)
+Writing at 0x00118514... (52 %)
+Writing at 0x0011d92d... (53 %)
+Writing at 0x00122e82... (54 %)
+Writing at 0x00127c66... (56 %)
+Writing at 0x0012d52a... (57 %)
+Writing at 0x00133aa0... (58 %)
+Writing at 0x00139b77... (60 %)
+Writing at 0x001406d6... (61 %)
+Writing at 0x00146a8c... (63 %)
+Writing at 0x0014ca98... (64 %)
+Writing at 0x0015278d... (65 %)
+Writing at 0x00158a30... (67 %)
+Writing at 0x0015e948... (68 %)
+Writing at 0x0016478f... (69 %)
+Writing at 0x001699ab... (71 %)
+Writing at 0x0016e923... (72 %)
+Writing at 0x00174201... (73 %)
+Writing at 0x0017996b... (75 %)
+Writing at 0x0017eec5... (76 %)
+Writing at 0x001843d7... (78 %)
+Writing at 0x0018a24a... (79 %)
+Writing at 0x0019042d... (80 %)
+Writing at 0x00195d37... (82 %)
+Writing at 0x0019ba1f... (83 %)
+Writing at 0x001a183a... (84 %)
+Writing at 0x001a70d3... (86 %)
+Writing at 0x001acc7a... (87 %)
+Writing at 0x001b2a1f... (89 %)
+Writing at 0x001b84d9... (90 %)
+Writing at 0x001bdb6b... (91 %)
+Writing at 0x001c41ee... (93 %)
+Writing at 0x001cc4cf... (94 %)
+Writing at 0x001d27aa... (95 %)
+Writing at 0x001d8d6c... (97 %)
+Writing at 0x001df0d9... (98 %)
+Writing at 0x001e553d... (100 %)
+Wrote 1945632 bytes (1196011 compressed) at 0x00010000 in 12.6 seconds (effective 1236.6 kbit/s)...
+Hash of data verified.
+Compressed 131072 bytes to 2425...
+Writing at 0x007e0000... (100 %)
+Wrote 131072 bytes (2425 compressed) at 0x007e0000 in 0.5 seconds (effective 2235.6 kbit/s)...
+Hash of data verified.
+
+Leaving...
+Hard resetting via RTS pin...

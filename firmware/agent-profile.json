@@ -1,0 +1,43 @@
+{
+  "name": "Lumi — aksolotlica dla Zosi",
+  "source_version": "agtvrsn_1101m5ct72rmegvtcad65hkcw9d8",
+  "model": "gpt-realtime-2.1",
+  "first_message": "Hej, Zosiu! Tu Lumi! Co u ciebie?",
+  "transcription": {
+    "model": "gpt-4o-mini-transcribe",
+    "language": "pl"
+  },
+  "tts": {
+    "voice_id": "eXpIbVcVbLo8ZJQDlDnl",
+    "model_id": "eleven_v4_turbo",
+    "singing_model_id": "eleven_v4"
+  },
+  "tools": [
+    {
+      "type": "function",
+      "name": "end_conversation",
+      "description": "Zakończ bieżącą rozmowę i przełącz Lumi w ciche oczekiwanie na hasło Hej Lumi, Luuu-miiii lub mocne potrząśnięcie. Zawsze wywołaj to narzędzie, gdy żegnasz się i kończysz rozmowę, także z własnej inicjatywy. Nie kończ rozmowy tylko z powodu ciszy, krótkiej odpowiedzi ani zmiany tematu. W farewell podaj krótkie, naturalne pożegnanie po polsku; urządzenie wypowie je raz i zamknie połączenie. Nie dodawaj osobnej wiadomości z tym samym pożegnaniem.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "farewell": {
+            "type": "string",
+            "description": "Krótkie pożegnanie, maksymalnie jedno zdanie."
+          }
+        },
+        "required": [
+          "farewell"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ],
+  "openai_published_prompt": {
+    "id": "pmpt_6ad9d5eafc8081979b17e9944a92569f0debf3035644eb35",
+    "version": "1",
+    "url": "https://platform.openai.com/audio/realtime/edit?prompt=pmpt_6ad9d5eafc8081979b17e9944a92569f0debf3035644eb35&version=1",
+    "usage": "Historical reference version 1; local firmware instructions updated to remove reaction wording. Firmware sends inline instructions; panel copy is not used."
+  },
+  "instructions_file": "prompt.txt",
+  "max_output_tokens": 1024
+}

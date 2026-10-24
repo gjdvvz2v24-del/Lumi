@@ -1,0 +1,18 @@
+{
+  "version": "2.9.1-dual",
+  "status": "experimental_user_requested",
+  "models": [
+    {
+      "phrase": "Hej Lumi",
+      "threshold": 0.55,
+      "sha256": "2787469c037f631f6792563cea5134cf1505e2d8ce07e96ae891d19f269800f9"
+    },
+    {
+      "phrase": "Luuu-miiii",
+      "threshold": 0.95,
+      "sha256": "ffe91e4b218c4e769eab37cfaa875b12685798f1a373a3839eeefb3346dbcd5a",
+      "prior_acceptance": "failed"
+    }
+  ],
+  "policy": "either detector; same session; both rearmed after end"
+}

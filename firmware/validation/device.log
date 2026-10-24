@@ -1,0 +1,2 @@
+I (5371) wake: DUAL_SELF_TEST model=2 above_threshold=1 peak=0.996 healthy=1
+I (5373) audio: WAKE_WAIT: say Hej Lumi or Luuu-miiii; microphone stays local

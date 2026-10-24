@@ -1,0 +1,8 @@
+Lumi 2.9.3
+
+Po rozpakowaniu zawsze otwórz katalog firmware.
+Wgrywanie z tego katalogu: bash dist/flash_prebuilt.sh /dev/cu.usbmodem1101
+
+Prompt zawiera ostatnie zmiany użytkownika, bez akapitu o śpiewie.
+Aplikacja pozostaje w wersji 2.9.3; aktualizacja dotyczy promptfs i układu paczki.
+Ponowne pakowanie: python3 tools/package_firmware.py /ścieżka/do/przygotowanego/wydania /ścieżka/do/wyniku.zip

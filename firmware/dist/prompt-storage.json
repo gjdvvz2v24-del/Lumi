@@ -1,0 +1,11 @@
+{
+  "offset": 8257536,
+  "size": 131072,
+  "generator_args": [
+    "--page-size=256",
+    "--obj-name-len=32",
+    "--meta-len=4",
+    "--use-magic",
+    "--use-magic-len"
+  ]
+}

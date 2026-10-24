@@ -1,0 +1,1 @@
+24.10.2026: aktualny prompt i wygenerowany fallback zsynchronizowane. ESP-IDF build PASS. test_lumi_profile.py PASS. test_prompt_storage.py PASS (SDK 26.5). Użytkownik potwierdził styl rozmowy przed importem; nowego pełnego obrazu aplikacji nie flashowano na urządzenie.
