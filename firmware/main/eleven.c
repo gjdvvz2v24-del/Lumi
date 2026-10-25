@@ -51,10 +51,12 @@ static void finish_wake_wait(void){
   ESP_LOGI(TAG,"Session ended; waiting locally for Hej Lumi, Luuu-miiii or strong shake");
  }
 }
+#include "mic_ready.inc"
 static void reply_playback_finished(void){
  g_response_complete=false;
- if(atomic_exchange(&end_after_reply,false))request_wake_wait();
- else g_phase=BOBER_LISTENING;
+ if(atomic_exchange(&end_after_reply,false)){mic_ready_cue_active=false;request_wake_wait();}
+ else if(mic_ready_cue_active){mic_ready_cue_active=false;g_phase=BOBER_LISTENING;ESP_LOGI(TAG,"Microphone ready: listening");}
+ else begin_listening();
 }
 static void queue_reply(const char *text){
  if(!text[0]){g_response_complete=true;return;}
@@ -276,7 +278,7 @@ void bober_eleven_task(void *arg){
   if(!wait_clock()||!current(gen)){vTaskDelay(pdMS_TO_TICKS(1000));continue;}
   char headers[560];snprintf(headers,sizeof(headers),"Authorization: Bearer %s\r\n",g_cfg.openai_key);
   ws_generation=gen;transport=false;configured=false;g_ws_ready=false;g_ws_reconnect=false;
-  g_phase=BOBER_CONNECTING;g_response_complete=false;assembling=false;message_len=0;
+  g_phase=BOBER_CONNECTING;g_response_complete=false;mic_ready_cue_active=false;assembling=false;message_len=0;
   xQueueReset(replies);bober_pcm_reset();if(g_uplink)xStreamBufferReset(g_uplink);
 #ifdef LUMI_SOL_ULTRAFAST
   xQueueReset(sol_requests);sol_begin_generation(gen);
@@ -304,7 +306,7 @@ void bober_eleven_task(void *arg){
    }
    if(!configured&&now-start>25000)break;
    if(configured&&!transport)break;
-   if(configured&&greeted&&g_phase==BOBER_CONNECTING)g_phase=BOBER_LISTENING;
+   if(configured&&greeted&&g_phase==BOBER_CONNECTING)begin_listening();
    if(configured&&!greeted){
     greeted=true;g_phase=BOBER_SPEAKING;g_response_complete=false;g_last_tts_begin_ms=now;
     r->generation=gen;strlcpy(r->text,bober_greeting,sizeof(r->text));if(!speak(r))break;

@@ -238,3 +238,15 @@ physical listening is needed to judge naturalness and timing.
 The prompt now identifies Lumi as an axolotl created by Grzegorz and allows
 consistent fictional personal anecdotes/preferences. Direct questions about
 whether anecdotes really happened receive an honest explanation of the persona.
+
+### Microphone-ready cue
+
+A locally synthesized, quiet 75 ms metallic double tap precedes each return to
+listening (after greeting/reply and after an ASR reconnect). It uses the existing
+PCM FIFO and speaker owner; uplink stays gated through the cue and the ordinary
+DMA/echo tail, then the phase changes to LISTENING. Completion of the cue does
+not queue another cue. Farewell/session shutdown skips it; failure to enqueue
+the optional cue falls back to listening. No API call is required. Regenerate
+`main/mic_ready_sound.h` with `tools/generate_mic_ready.py` (also writes a local WAV
+preview to the diagnostics folder). Native event tests cover cue completion,
+failure fallback and farewell, with existing playback-gate/speaker tests.

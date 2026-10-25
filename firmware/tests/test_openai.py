@@ -39,7 +39,9 @@ static reply_t queued;
 static bool configured,g_ws_ready,g_ws_reconnect,g_response_complete;
 static bool g_session_enabled=true,g_wifi_ready=true,power;
 static int g_phase,replies,queue_count;static uint32_t ws_generation=3,g_generation=3;
-static long g_last_tts_begin_ms;
+static long g_last_tts_begin_ms,g_last_pcm_ms;
+static bool cue_push_ok=true;static unsigned cue_pushes;
+static bool bober_pcm_push(const uint8_t *p,size_t n,uint32_t gen){assert(p&&n==2400&&gen==3);cue_pushes++;return cue_push_ok;}
 static char message[32768];
 static int64_t bober_now_ms(void){return 100;}
 static bool bober_power_requested(void){return power;}
@@ -84,7 +86,10 @@ int main(void){
  assert(!g_session_enabled&&g_phase==BOBER_OFF&&atomic_load(&wake_wait_requested));
  finish_wake_wait();assert(g_phase==BOBER_WAKE_WAIT&&!g_session_enabled);
  g_session_enabled=true;g_phase=BOBER_SPEAKING;reply_playback_finished();
- assert(g_session_enabled&&g_phase==BOBER_LISTENING); /* normal replies keep session */
+ assert(g_session_enabled&&g_phase==BOBER_SPEAKING&&mic_ready_cue_active&&g_response_complete);
+ reply_playback_finished();assert(g_phase==BOBER_LISTENING&&!mic_ready_cue_active);
+ cue_push_ok=false;reply_playback_finished();assert(g_phase==BOBER_LISTENING&&!mic_ready_cue_active);cue_push_ok=true;
+ assert(cue_pushes==2); /* one cue per reply, no repeated cue on cue completion */
  event("{\"type\":\"response.done\",\"response\":{\"status\":\"completed\",\"output\":[{\"type\":\"function_call\",\"name\":\"end_conversation\",\"arguments\":\"{\\\"farewell\\\":42}\"}]}}");
  assert(g_ws_reconnect&&!atomic_load(&end_after_reply)&&!queue_count);g_ws_reconnect=false;
  event("{\"type\":\"response.done\",\"response\":{\"status\":\"completed\",\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":\"Pa, Zosiu!\"}]},{\"type\":\"function_call\",\"name\":\"end_conversation\",\"arguments\":\"{\\\"farewell\\\":\\\"Pa, Zosiu!\\\"}\"}]}}");
