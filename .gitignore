@@ -7,3 +7,4 @@
 .env.*
 *.log
 **/sdkconfig.old
+**/sol-test-output/

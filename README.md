@@ -34,7 +34,13 @@ Aktualny prompt wymaga krótkiej, prostej rozmowy bez nieproszonych porad, komen
 
 Modele wybudzania są eksperymentalne; skuteczność dla różnych osób nie jest gwarantowana. Instrukcję śpiewu usunięto z promptu. W kodzie pozostała obsługa tagów śpiewu z wersji 2.9.3, lecz nie potwierdzono satysfakcjonującego śpiewu.
 
-## Pakowanie
+## Eksperyment Sol Ultrafast
+
+Prototyp hostowy toru WAV → polska transkrypcja → Sol 6.1 Ultrafast → obecny głos
+Lumi opisuje [instrukcja eksperymentu](firmware/experiments/sol-ultrafast.md).
+To test usług na komputerze; firmware i paczka do flashowania nadal używają Realtime.
+
+## Pakowanie firmware
 
 `python3 firmware/tools/package_firmware.py firmware packages/lumi-firmware.zip`
 
