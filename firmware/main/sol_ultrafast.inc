@@ -42,7 +42,7 @@ static void sol_submit(const char *text){
 
 static bool sol_generate(reply_t *r){
  bool ok=false;char *body=NULL,*data=NULL;cJSON *root=NULL;
- if(!current(r->generation)||!sol_template)return false;
+ if(!current(r->generation)||!sol_template||!g_cfg.sol_key[0])return false;
  cJSON *req=cJSON_Duplicate(sol_template,true);
  if(!req)return false;
  if(!cJSON_AddStringToObject(req,"input",r->text))goto payload_done;
@@ -55,7 +55,7 @@ static bool sol_generate(reply_t *r){
   .timeout_ms=15000,.buffer_size=2048,.crt_bundle_attach=esp_crt_bundle_attach,.disable_auto_redirect=true};
  esp_http_client_handle_t h=esp_http_client_init(&cfg);
  if(!h){free(body);free(data);return false;}
- char auth[540];snprintf(auth,sizeof(auth),"Bearer %s",g_cfg.openai_key);
+ char auth[540];snprintf(auth,sizeof(auth),"Bearer %s",g_cfg.sol_key);
  esp_http_client_set_header(h,"Authorization",auth);memset(auth,0,sizeof(auth));
  esp_http_client_set_header(h,"Content-Type","application/json");
  esp_http_client_set_header(h,"Accept","application/json");

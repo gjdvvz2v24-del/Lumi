@@ -8,6 +8,23 @@
 #include <string.h>
 #include "esp_heap_caps.h"
 #include "mbedtls/base64.h"
+#ifdef LUMI_SOL_ULTRAFAST
+#include "nvs.h"
+/* USB provisioning changes only this experimental key; never prints it. */
+static void set_sol_key(const char *key){
+ size_t len=strlen(key);
+ if(g_session_enabled||len<20||len>=sizeof(g_cfg.sol_key)||strncmp(key,"sk-",3)){
+  printf("LUMI_SOL_KEY_REJECTED\n");return;
+ }
+ for(size_t i=0;i<len;i++)if((unsigned char)key[i]<33||(unsigned char)key[i]>126){
+  printf("LUMI_SOL_KEY_REJECTED\n");return;
+ }
+ nvs_handle_t n;esp_err_t e=nvs_open("bober",NVS_READWRITE,&n);
+ if(e==ESP_OK){e=nvs_set_str(n,"sol",key);if(e==ESP_OK)e=nvs_commit(n);nvs_close(n);}
+ if(e==ESP_OK)strlcpy(g_cfg.sol_key,key,sizeof(g_cfg.sol_key));
+ printf(e==ESP_OK?"LUMI_SOL_KEY_SAVED\n":"LUMI_SOL_KEY_FAILED\n");fflush(stdout);
+}
+#endif
 #define CAPTURE_SAMPLES (16000u*20u)
 static atomic_bool requested,sending,ready;
 static int16_t *recording;
@@ -48,13 +65,23 @@ bool lumi_capture_feed(const int16_t *pcm,size_t count){
  return true;
 }
 void lumi_capture_command_task(void *arg){
- (void)arg;char command[64];size_t n=0;
+ (void)arg;
+#ifdef LUMI_SOL_ULTRAFAST
+ char command[560];
+#else
+ char command[64];
+#endif
+ size_t n=0;bool overflow=false;
  printf("LUMI_CAPTURE_COMMAND_READY\n");fflush(stdout);
  for(;;){
   int c=getchar();
   if(c==EOF){clearerr(stdin);vTaskDelay(pdMS_TO_TICKS(20));continue;}
-  if(c!='\n'&&c!='\r'){if(n+1<sizeof(command))command[n++]=(char)c;else n=0;continue;}
+  if(c!='\n'&&c!='\r'){if(!overflow&&n+1<sizeof(command))command[n++]=(char)c;else overflow=true;continue;}
+  if(overflow){memset(command,0,sizeof(command));n=0;overflow=false;continue;}
   command[n]=0;n=0;
+#ifdef LUMI_SOL_ULTRAFAST
+  if(!strncmp(command,"LUMI_SOL_KEY ",13)){set_sol_key(command+13);memset(command,0,sizeof(command));continue;}
+#endif
   if(!strcmp(command,"LUMI_CAPTURE_START")&&!g_session_enabled&&g_phase==BOBER_WAKE_WAIT&&!recording)atomic_store(&requested,true);
   else if(!strcmp(command,"LUMI_CAPTURE_GET")&&atomic_load(&ready)&&!atomic_exchange(&sending,true)){
    if(xTaskCreate(dump_task,"capture_dump",4096,NULL,2,NULL)!=pdPASS)atomic_store(&sending,false);

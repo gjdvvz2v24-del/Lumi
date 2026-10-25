@@ -30,6 +30,7 @@ static void load(void){
  get(n,"ssid",g_cfg.ssid,sizeof(g_cfg.ssid));get(n,"pass",g_cfg.password,sizeof(g_cfg.password));
  get(n,"key",g_cfg.api_key,sizeof(g_cfg.api_key));
  get(n,"openai",g_cfg.openai_key,sizeof(g_cfg.openai_key));
+ get(n,"sol",g_cfg.sol_key,sizeof(g_cfg.sol_key));
  get(n,"voice",g_cfg.voice_id,sizeof(g_cfg.voice_id));
  // Migrate the previous Bober default while retaining explicit custom voices.
  if(!g_cfg.voice_id[0]||!strcmp(g_cfg.voice_id,"gNNJUEmXjdMOywK9rhxY"))

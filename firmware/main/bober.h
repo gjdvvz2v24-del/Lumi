@@ -15,6 +15,7 @@
 typedef enum { BOBER_OFF=0, BOBER_CONNECTING, BOBER_SPEAKING, BOBER_LISTENING, BOBER_WAKE_WAIT } bober_phase_t;
 typedef struct {
     char ssid[33]; char password[65]; char openai_key[512]; char api_key[192]; char voice_id[96];
+    char sol_key[512]; /* Separate experimental Responses credential; never a fallback. */
 } bober_config_t;
 extern bober_config_t g_cfg;
 extern volatile bool g_wifi_ready;

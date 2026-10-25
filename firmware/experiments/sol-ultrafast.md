@@ -111,9 +111,16 @@ idf.py -DLUMI_SOL_ULTRAFAST=OFF build
 Backend działa w istniejącym zadaniu sieciowym, poza callbackiem WebSocket.
 Na czas Sol/TTS blokuje uplink mikrofonu. Zawartość promptfs jest przekazywana
 do Sol, a `previous_response_id` utrzymuje historię do końca sesji/ponownego
-połączenia. Używany jest OpenAI key z NVS urządzenia, który musi mieć również
-uprawnienia Responses i Ultrafast. Klucz testowy z komputera nie jest osadzany
-w binarce ani przenoszony do NVS. Głos i klucz ElevenLabs pozostają z NVS.
+połączenia. Realtime używa istniejącego klucza `bober/openai`, a Sol osobnego
+klucza testowego `bober/sol` w NVS. Brak klucza testowego nie uruchamia zastępczo
+klucza Bobera. Głos i klucz ElevenLabs pozostają z NVS. Żaden sekret nie jest
+osadzony w kodzie, binarce aplikacji ani paczce GitHuba.
+
+Klucz Sol zapisuje się przez USB komendą `LUMI_SOL_KEY <sekret>` zakończoną LF,
+tylko gdy rozmowa jest wyłączona. Potwierdzenie `LUMI_SOL_KEY_SAVED` nie zawiera
+sekretu. Operacja aktualizuje wyłącznie wpis `bober/sol` przez NVS API;
+nie używa `configure_usb.py`, który nadpisuje całą partycję. Komenda jest
+dostępna wyłącznie w buildzie eksperymentalnym i nie powinna trafić do logów hosta.
 TTS czeka na pełną odpowiedź. Firmware sprawdza status i zwrócony tier,
 obsługuje pożegnanie jeden raz i odrzuca wynik po zmianie generacji sesji.
 Błąd API nie uruchamia automatycznego ponawiania ani modelu zastępczego.
@@ -146,9 +153,14 @@ płatne usługi. Domyślne logi nie zawierają kluczy ani treści rozmowy.
   bez paniki i bez rozpoczęcia sesji API podczas kontroli startu.
 - Pierwsza próba rozmowy użytkownika zwróciła HTTP 401: istniejący klucz urządzenia
   nie ma `api.responses.write`. Potrzebna zmiana Responses → Write w uprawnieniach
-  tego klucza; nie wymaga ponownego flashowania. Po zgodzie użytkownika zapisano
-  Responses → Write; panel ostrzega o kilkuminutowej propagacji uprawnień.
+  tego klucza ujawnił błędne współdzielenie klucza eksperymentu. Po doprecyzowaniu
+  użytkownika cofnięto Responses w kluczu Bobera i rozdzielono klucze w firmware.
+  Klucz „Sol Ultrafast test 2026-10-25” ma już Responses → Write.
   Udanej rozmowy Sol na urządzeniu jeszcze nie potwierdzono.
+- Poprawiony build z rozdzielonymi kluczami ponownie zapisano przez USB,
+  z weryfikacją hasha. Klucz testowy zapisano jako osobny wpis `bober/sol`;
+  urządzenie potwierdziło `LUMI_SOL_KEY_SAVED`. SHA-256 nowej aplikacji:
+  `7caacb016984896190f1685d301f14d8b3af5e89d1f40d91e4094c30032fbb10`.
 
 Dokumentacja: [Ultrafast](https://developers.openai.com/api/docs/guides/ultrafast-mode),
 [transkrypcja](https://developers.openai.com/api/docs/guides/speech-to-text),

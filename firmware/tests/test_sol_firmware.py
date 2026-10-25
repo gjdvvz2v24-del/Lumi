@@ -32,7 +32,7 @@ typedef struct {const char *url;int method,timeout_ms,buffer_size;void *crt_bund
 #define ESP_LOGE(...) ((void)0)
 #define pdMS_TO_TICKS(x) (x)
 static void *esp_crt_bundle_attach;
-static struct {char openai_key[512];} g_cfg={"test-key"};
+static struct {char sol_key[512];} g_cfg={"test-key"};
 static bool active=true,g_response_complete,failed;
 static int g_phase=BOBER_LISTENING;
 static int64_t g_last_tts_begin_ms;
@@ -78,6 +78,7 @@ int main(void){
  assert(sol_generate(&queued));assert(!strcmp(queued.text,"Hej!")&&!strcmp(sol_previous,"resp_ok"));
  assert(strstr(request_body,"Cześć")&&!strstr(request_body,"previous_response_id"));
  assert(sol_generate(&queued));assert(strstr(request_body,"previous_response_id"));
+ g_cfg.sol_key[0]=0;assert(!sol_generate(&queued));strcpy(g_cfg.sol_key,"test-key");
  fake_response="{\"id\":\"wrong\",\"status\":\"incomplete\",\"service_tier\":\"ultrafast\",\"output\":[]}";
  assert(!sol_generate(&queued));assert(!strcmp(sol_previous,"resp_ok"));
  fake_response="{\"id\":\"wrong\",\"status\":\"completed\",\"service_tier\":\"default\",\"output\":[]}";
