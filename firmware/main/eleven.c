@@ -248,6 +248,9 @@ static bool speak(const reply_t *r){
  if(ok&&current(r->generation))g_response_complete=true;
  return ok;
 }
+#ifdef LUMI_SOL_ULTRAFAST
+#include "sol_fillers.inc"
+#endif
 static bool wait_clock(void){
  for(unsigned i=0;i<26&&g_wifi_ready&&!bober_power_requested();i++){
   if(time(NULL)>1767225600)return true;
@@ -312,7 +315,7 @@ void bober_eleven_task(void *arg){
    if(xQueueReceive(replies,r,0)==pdTRUE&&r->generation==gen){if(!speak(r)){ESP_LOGW(TAG,"Reconnect: queued TTS failed");break;}}
 #ifdef LUMI_SOL_ULTRAFAST
    if(xQueueReceive(sol_requests,r,0)==pdTRUE&&current(r->generation)){
-    if(!sol_generate(r)){
+    if(!sol_generate_with_filler(r)){
      if(!current(gen))break;
      ESP_LOGE(TAG,"Sol request failed; no automatic retry or backend fallback");
      strlcpy(r->text,"Nie udało mi się pobrać odpowiedzi. Spróbuj jeszcze raz.",sizeof(r->text));

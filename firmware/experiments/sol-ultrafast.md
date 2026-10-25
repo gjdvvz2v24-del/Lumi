@@ -218,3 +218,23 @@ toru i zachowanie przy trzech połączeniach TLS wymagają oceny na urządzeniu.
 Dokumentacja: [Ultrafast](https://developers.openai.com/api/docs/guides/ultrafast-mode),
 [transkrypcja](https://developers.openai.com/api/docs/guides/speech-to-text),
 [strumieniowanie Responses](https://developers.openai.com/api/docs/guides/streaming-responses).
+
+### Cached thinking fillers
+
+Six PCM clips generated once with the profile's voice/model are embedded only in
+Sol builds: Hmm…, Niech pomyślę…, Chwileczkę…, Daj mi sekundę…, Już myślę…,
+Moment…. The manifest records voice/model/text; `tools/generate_fillers.py`
+requires ELEVENLABS_API_KEY and skips existing files to prevent duplicate charges.
+Local playback makes no API call. It is eligible for transcripts of at least 20
+words, on one third of eligible turns, at most once per minute. It starts only
+if Sol is still pending after 1200 ms. A temporary 8 KB worker owns Sol HTTP;
+the existing network owner feeds filler PCM into the same FIFO as the final
+answer. Clips finish before the answer plays, microphone stays gated until the
+whole answer drains, and session cancellation joins the worker before cleanup.
+If task allocation fails, ordinary synchronous generation remains available.
+Consecutive filler clips do not repeat. Policy and assets have offline checks;
+physical listening is needed to judge naturalness and timing.
+
+The prompt now identifies Lumi as an axolotl created by Grzegorz and allows
+consistent fictional personal anecdotes/preferences. Direct questions about
+whether anecdotes really happened receive an honest explanation of the persona.

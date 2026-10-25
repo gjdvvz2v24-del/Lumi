@@ -1,0 +1,13 @@
+{
+  "voice_id": "eXpIbVcVbLo8ZJQDlDnl",
+  "model_id": "eleven_v4_turbo",
+  "format": "pcm_s16le_16000_mono",
+  "texts": [
+    "Hmm…",
+    "Niech pomyślę…",
+    "Chwileczkę…",
+    "Daj mi sekundę…",
+    "Już myślę…",
+    "Moment…"
+  ]
+}
