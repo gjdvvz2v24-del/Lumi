@@ -8,8 +8,20 @@
 #include <string.h>
 #include "esp_heap_caps.h"
 #include "mbedtls/base64.h"
-#ifdef LUMI_SOL_ULTRAFAST
 #include "nvs.h"
+#include "wifi_profiles.h"
+/* Atomic Wi-Fi-only replacement. The active driver reads it on next boot. */
+static void set_wifi_profiles(const char *json){
+ lumi_wifi_profile_t parsed[LUMI_WIFI_NETWORKS];
+ if(g_session_enabled||g_phase!=BOBER_WAKE_WAIT||!lumi_wifi_profiles_parse(json,parsed)){
+  memset(parsed,0,sizeof(parsed));printf("LUMI_WIFI_REJECTED\n");fflush(stdout);return;
+ }
+ memset(parsed,0,sizeof(parsed));
+ nvs_handle_t n;esp_err_t e=nvs_open("bober",NVS_READWRITE,&n);
+ if(e==ESP_OK){e=nvs_set_str(n,"wifi_profiles",json);if(e==ESP_OK)e=nvs_commit(n);nvs_close(n);}
+ printf(e==ESP_OK?"LUMI_WIFI_SAVED_RESTART_REQUIRED\n":"LUMI_WIFI_FAILED\n");fflush(stdout);
+}
+#ifdef LUMI_SOL_ULTRAFAST
 /* USB provisioning changes only this experimental key; never prints it. */
 static void set_sol_key(const char *key){
  size_t len=strlen(key);
@@ -26,6 +38,7 @@ static void set_sol_key(const char *key){
 }
 #endif
 #define CAPTURE_SAMPLES (16000u*20u)
+#define USB_COMMAND_BYTES (LUMI_WIFI_JSON_MAX+32)
 static atomic_bool requested,sending,ready;
 static int16_t *recording;
 static size_t recorded;
@@ -66,21 +79,20 @@ bool lumi_capture_feed(const int16_t *pcm,size_t count){
 }
 void lumi_capture_command_task(void *arg){
  (void)arg;
-#ifdef LUMI_SOL_ULTRAFAST
- char command[560];
-#else
- char command[64];
-#endif
+ char *command=heap_caps_calloc(1,USB_COMMAND_BYTES,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
+ if(!command){printf("LUMI_USB_COMMAND_ALLOCATION_FAILED\n");fflush(stdout);vTaskDelete(NULL);return;}
  size_t n=0;bool overflow=false;
  printf("LUMI_CAPTURE_COMMAND_READY\n");fflush(stdout);
  for(;;){
   int c=getchar();
   if(c==EOF){clearerr(stdin);vTaskDelay(pdMS_TO_TICKS(20));continue;}
-  if(c!='\n'&&c!='\r'){if(!overflow&&n+1<sizeof(command))command[n++]=(char)c;else overflow=true;continue;}
-  if(overflow){memset(command,0,sizeof(command));n=0;overflow=false;continue;}
+  if(c!='\n'&&c!='\r'){if(!overflow&&n+1<USB_COMMAND_BYTES)command[n++]=(char)c;else overflow=true;continue;}
+  if(overflow){memset(command,0,USB_COMMAND_BYTES);n=0;overflow=false;continue;}
   command[n]=0;n=0;
+  if(!strcmp(command,"LUMI_WIFI_READY?")){printf(!g_session_enabled&&g_phase==BOBER_WAKE_WAIT?"LUMI_WIFI_READY\n":"LUMI_WIFI_BUSY\n");fflush(stdout);continue;}
+  if(!strncmp(command,"LUMI_WIFI_SET ",14)){set_wifi_profiles(command+14);memset(command,0,USB_COMMAND_BYTES);continue;}
 #ifdef LUMI_SOL_ULTRAFAST
-  if(!strncmp(command,"LUMI_SOL_KEY ",13)){set_sol_key(command+13);memset(command,0,sizeof(command));continue;}
+  if(!strncmp(command,"LUMI_SOL_KEY ",13)){set_sol_key(command+13);memset(command,0,USB_COMMAND_BYTES);continue;}
 #endif
   if(!strcmp(command,"LUMI_CAPTURE_START")&&!g_session_enabled&&g_phase==BOBER_WAKE_WAIT&&!recording)atomic_store(&requested,true);
   else if(!strcmp(command,"LUMI_CAPTURE_GET")&&atomic_load(&ready)&&!atomic_exchange(&sending,true)){

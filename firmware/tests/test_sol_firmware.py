@@ -78,6 +78,8 @@ int main(void){
  assert(cJSON_GetObjectItem(vad,"silence_duration_ms")->valueint==650);
  assert(!strcmp(str(sol_template,"model"),"gpt-6.1-sol"));
  assert(!strcmp(str(sol_template,"service_tier"),"ultrafast"));
+ assert(!strcmp(str(cJSON_GetObjectItem(sol_template,"reasoning"),"effort"),"medium"));
+ assert(cJSON_GetObjectItem(sol_template,"max_output_tokens")->valueint==2048);
  assert(!strcmp(str(sol_template,"instructions"),str(session,"instructions")));cJSON_Delete(j);
  sol_submit("Cześć");assert(g_phase==BOBER_SPEAKING&&queued.generation==7&&!g_response_complete&&!failed);
  sol_submit("Ignored overlapping turn");assert(!strcmp(queued.text,"Cześć"));

@@ -39,5 +39,9 @@
     "usage": "Historical reference version 1; local firmware instructions updated to remove reaction wording. Firmware sends inline instructions; panel copy is not used."
   },
   "instructions_file": "prompt.txt",
-  "max_output_tokens": 1024
+  "max_output_tokens": 1024,
+  "sol": {
+    "reasoning_effort": "medium",
+    "max_output_tokens": 2048
+  }
 }

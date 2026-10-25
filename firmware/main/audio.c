@@ -67,7 +67,7 @@ bool bober_audio_init(void){
  esp_codec_dev_sample_info_t format={.bits_per_sample=32,.channel=2,.channel_mask=3,
   .sample_rate=BOBER_RATE,.mclk_multiple=256};
  if(esp_codec_dev_open(dev,&format)!=ESP_CODEC_DEV_OK){ESP_LOGE(TAG,"ES8311 open failed");return false;}
- esp_codec_dev_set_out_vol(dev,90);
+ esp_codec_dev_set_out_vol(dev,95);
  // ES8311 starts with a very low post-PGA digital gain (v1.5: 6 dB).
  // 24 dB is a moderate starting point: +18 dB vs v1.5, not the clipped 42 dB maximum.
  // Analog PGA is configured by the codec driver separately.

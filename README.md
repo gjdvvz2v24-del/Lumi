@@ -13,6 +13,14 @@ W katalogu `firmware/` uruchom `bash dist/flash_prebuilt.sh PORT_USB`. Skrypt wy
 
 Klucze usług i Wi-Fi konfiguruj lokalnie przez `configure_usb.py --help`. Nie są częścią repozytorium.
 
+## Trzy sieci Wi-Fi (nowy kod, jeszcze niewgrany)
+
+Firmware obsługuje do trzech różnych sieci 2,4 GHz: skanuje przy starcie i po
+rozłączeniu, wybierając najsilniejszy dostępny sygnał. Konfigurację samych sieci
+obsługuje `firmware/configure_wifi_usb.py`; zachowuje klucze usług i prompt.
+Bez nowych profili nadal korzysta z dotychczas zapisanej sieci. Zmiany stosuje
+po restarcie; narzędzie wymaga firmware z obsługą tego polecenia USB.
+
 ## Prompt i budowanie
 
 Źródłem instrukcji jest `firmware/prompt.txt`, a powitania i ustawień `firmware/agent-profile.json`.

@@ -3,7 +3,7 @@
 Gałąź `test/sol-ultrafast`, baza: `d1092ec` z `origin/main`.
 Źródłem promptu, transkrypcji, narzędzia kończenia rozmowy, głosu i modelu
 ElevenLabs jest aktualne repozytorium (`prompt.txt`, `agent-profile.json`).
-Model rozmowy w eksperymencie: `gpt-6.1-sol`, reasoning `low`.
+Model rozmowy w eksperymencie: `gpt-6.1-sol`, reasoning `medium`, budżet 2048 tokenów odpowiedzi (razem z rozumowaniem).
 
 ## Co można sprawdzić
 
@@ -203,7 +203,7 @@ mikrofonu po odtwarzaniu i limit bezczynności pozostają. Poniżej opis próby 
   Log `reused_client` oznacza użycie tego samego klienta, nie dowód braku handshake.
 - Limit 10 minut w wariancie Sol dotyczy teraz bezczynności, odnawianej przez
   rozpoznaną turę i poprawną odpowiedź; nie kończy aktywnej rozmowy po 10 minutach
-  od połączenia ASR. Limit 1024 tokenów jednej odpowiedzi pozostaje bez zmian.
+  od połączenia ASR. W tej wcześniejszej próbie limit wynosił 1024 tokeny; aktualnie Sol ma 2048.
 - Log `TTS first PCM` mierzy czas TTS i czas od przekazania transkrypcji do Sol
   do pierwszych bajtów PCM; nie obejmuje oczekiwania VAD ani samej transkrypcji.
 
@@ -250,3 +250,70 @@ the optional cue falls back to listening. No API call is required. Regenerate
 `main/mic_ready_sound.h` with `tools/generate_mic_ready.py` (also writes a local WAV
 preview to the diagnostics folder). Native event tests cover cue completion,
 failure fallback and farewell, with existing playback-gate/speaker tests.
+
+
+### Prepared only: reasoning medium and three Wi-Fi profiles
+
+This revision has not been flashed or provisioned to the Atom. Sol remains
+`gpt-6.1-sol` / `ultrafast`, now with `reasoning.effort=medium` and a 2048-token
+output budget, configured in `agent-profile.json` under `sol`. The increased
+budget includes reasoning, while the prompt still asks for short spoken answers.
+This may increase latency and billed output tokens; offline tests validate the
+request, not a quality or latency improvement. No paid API test was run.
+Official supported efforts: https://developers.openai.com/api/docs/models/gpt-6.1-sol
+
+Wi-Fi now scans asynchronously at STA startup and after disconnect. Among up to
+three visible configured 2.4 GHz networks, it chooses the strongest compatible
+RSSI and pins the selected BSSID/channel. Equal RSSI prefers the earlier profile.
+It does not interrupt a healthy connection to roam. Scan timeout is 10 s;
+association/DHCP timeout is 30 s; retry/rescan delay is 3 s. Profiles that fail
+association/DHCP are skipped for 30 s, so a stronger AP with an invalid password
+cannot indefinitely starve a working alternative. Retry timer events are posted
+to the default event loop, serializing selection with Wi-Fi driver events.
+
+Without the new `bober/wifi_profiles` NVS string, the original `ssid`/`pass`
+configuration is used as the sole profile. The USB command replaces the complete
+profile list in one NVS value, preserving all API keys, legacy fields and prompt.
+SSID/passwords are never logged. It requires WAKE_WAIT and applies after restart.
+The USB tool checks firmware readiness before sending any credentials.
+
+When this firmware is eventually deployed, configure locally (do not run now):
+
+```sh
+python3 firmware/configure_wifi_usb.py PORT_USB
+```
+
+It asks for up to three different SSIDs and hidden password input. A local JSON
+array can instead be supplied with `--file PATH`; `--check --file PATH` validates
+without opening USB. Each entry has `ssid` and `password` fields. Open networks
+use an empty password. Do not commit credential files. This is a Wi-Fi-only
+updater; the older `configure_usb.py` is still full initial NVS provisioning.
+
+The prompt now allows occasional true poop trivia when relevant. Native tests
+execute the real C profile parser, USB setter, scan selection and reconnect
+callbacks against fake NVS/radio/HTTP; physical three-network roaming remains
+untested until deployment is requested.
+
+
+### Prepared only: long-story TTS and output volume
+
+The old producer rejected more than 45 seconds of *downloaded* PCM and abandoned
+its queue on failure. Download can run ahead of playback, so this could cut the
+audible story much earlier, including around ten seconds. This is a confirmed
+code limit; it has not yet been confirmed as the cause of the user's specific
+live incident. The old fixed 60 s stream deadline and 90 s turn-age playback
+watchdog also cut long audio.
+
+TTS now streams up to five minutes of PCM through the existing bounded 2 MiB
+FIFO, with a six-minute total download budget. HTTP timeout/no-progress guard
+is 30 s. FIFO backpressure refreshes progress only while the speaker consumes
+PCM. Playback watchdog detects 90 s without network/playback progress rather
+than 90 s since turn start. Cancellation and ASR reconnect still stop the
+producer; no paid automatic retry is added. Logs distinguish HTTP status, I/O
+errors, ASR reconnect, cancellation, byte limit and inactivity, without text or
+credentials. Native fake-radio/HTTP tests stream full three/five-minute audio,
+exercise backpressure and EOF/odd samples, and verify the mic stays gated until
+PCM drains. These tests make no API or device calls.
+
+Codec output volume is now 95 percent (previously 90). The changes are built
+but **not flashed**; live audio, loudness and Wi-Fi selection await deployment.

@@ -2,6 +2,8 @@
 import importlib.util
 from pathlib import Path
 import unittest
+import json
+from unittest.mock import patch, MagicMock
 
 spec = importlib.util.spec_from_file_location("sol", Path(__file__).resolve().parents[1] / "tools/check_sol_ultrafast.py")
 sol = importlib.util.module_from_spec(spec)
@@ -9,6 +11,17 @@ spec.loader.exec_module(sol)
 
 
 class ProtocolTests(unittest.TestCase):
+    def test_host_uses_profile_reasoning_and_budget(self):
+        profile=json.loads((Path(__file__).resolve().parents[1]/"agent-profile.json").read_text())
+        completed={"status":"completed","service_tier":"ultrafast","model":"gpt-6.1-sol","id":"resp_fake","output":[{"type":"message","content":[{"type":"output_text","text":"Test."}]}]}
+        stream=MagicMock();stream.__enter__.return_value=[("data: "+json.dumps({"type":"response.completed","response":completed})+"\n\n").encode()]
+        with patch.object(sol,"request",return_value=stream) as request:
+            reply,_,_=sol.generate("Test",profile,"Prompt","fake-key","ultrafast")
+        body=json.loads(request.call_args.args[1])
+        self.assertEqual(reply,"Test.")
+        self.assertEqual(body["reasoning"]["effort"],"medium")
+        self.assertEqual(body["max_output_tokens"],2048)
+
     def test_sse_multiline_and_unterminated_final_event(self):
         events = list(sol.sse_events([b": keepalive\n", b"event: response.completed\n",
                                      b'data: {"type":\n', b'data: "response.completed"}\n',

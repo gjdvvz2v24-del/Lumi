@@ -34,8 +34,8 @@ static char *sol_prepare(char *session_json){
   cJSON_AddStringToObject(sol_template,"model","gpt-6.1-sol")&&
   cJSON_AddStringToObject(sol_template,"service_tier","ultrafast")&&
   cJSON_AddStringToObject(sol_template,"instructions",str(session,"instructions"))&&
-  cJSON_AddNumberToObject(sol_template,"max_output_tokens",1024)&&
-  cJSON_AddStringToObject(reason,"effort","low");
+  cJSON_AddNumberToObject(sol_template,"max_output_tokens",LUMI_SOL_MAX_OUTPUT_TOKENS)&&
+  cJSON_AddStringToObject(reason,"effort",LUMI_SOL_REASONING_EFFORT);
  if(ok){cJSON_AddItemToObject(sol_template,"reasoning",reason);reason=NULL;
   cJSON *copy=cJSON_Duplicate(tools,true);ok=copy&&cJSON_AddItemToObject(sol_template,"tools",copy);
   if(!ok)cJSON_Delete(copy);

@@ -6,6 +6,7 @@
 #include "session_control.h"
 #include "tts_delivery.h"
 #include "playback_gate.h"
+#include "tts_limits.h"
 #include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -214,38 +215,53 @@ static bool speak(const reply_t *r){
   (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT),
   (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT),
   (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT));
- bool ok=false,bad=false;size_t received=0,carry=0;
- int64_t deadline=bober_now_ms()+60000;
+ bool ok=false,bad=false;size_t received=0,carry=0;const char *stage="open";int http_status=0,io_error=0;
+ int64_t deadline=tts_start+LUMI_TTS_TOTAL_MS,last_progress=tts_start,last_play=g_last_play_ms;
  char url[256];snprintf(url,sizeof(url),"https://api.elevenlabs.io/v1/text-to-speech/%s/stream?output_format=pcm_16000",g_cfg.voice_id);
  cJSON *j=lumi_tts_payload(r->text);if(!j)return false;
  ESP_LOGI(TAG,"TTS delivery=%s model=%s",lumi_tts_is_singing(r->text)?"singing":"speech",str(j,"model_id"));
  char *body=cJSON_PrintUnformatted(j);cJSON_Delete(j);if(!body)return false;
- esp_http_client_config_t cfg={.url=url,.method=HTTP_METHOD_POST,.timeout_ms=10000,.buffer_size=2048,
+ esp_http_client_config_t cfg={.url=url,.method=HTTP_METHOD_POST,.timeout_ms=LUMI_TTS_IDLE_MS,.buffer_size=2048,
   .crt_bundle_attach=esp_crt_bundle_attach,.disable_auto_redirect=true,.event_handler=header,.user_data=&bad};
  esp_http_client_handle_t h=esp_http_client_init(&cfg);if(!h){free(body);return false;}
  uint8_t pcm[2048];
  esp_http_client_set_header(h,"xi-api-key",g_cfg.api_key);esp_http_client_set_header(h,"Content-Type","application/json");
  esp_http_client_set_header(h,"Accept","audio/pcm");
- if(!current(r->generation)||esp_http_client_open(h,strlen(body))!=ESP_OK)goto done;
+ if(!current(r->generation))goto done;
+ io_error=esp_http_client_open(h,strlen(body));if(io_error!=ESP_OK)goto done;
+ stage="write";
  for(size_t sent=0;sent<strlen(body);){
   if(!current(r->generation)||bober_now_ms()>deadline)goto done;
-  int n=esp_http_client_write(h,body+sent,strlen(body)-sent);if(n<=0)goto done;sent+=(size_t)n;
+  int n=esp_http_client_write(h,body+sent,strlen(body)-sent);if(n<=0){io_error=n;goto done;}sent+=(size_t)n;
  }
- if(esp_http_client_fetch_headers(h)<0||esp_http_client_get_status_code(h)!=200||bad)goto done;
+ stage="headers";
+ int64_t headers=esp_http_client_fetch_headers(h);if(headers<0){io_error=(int)headers;goto done;}
+ http_status=esp_http_client_get_status_code(h);
+ if(http_status!=200){stage="http_status";goto done;}
+ if(bad){stage="content_type";goto done;}
+ stage="read";
  while(current(r->generation)&&!g_ws_reconnect&&bober_now_ms()<deadline){
+  if(bober_now_ms()-last_progress>LUMI_TTS_IDLE_MS){stage="no_progress";goto done;}
   int n=esp_http_client_read(h,(char*)pcm+carry,sizeof(pcm)-carry);
-  if(n<0)goto done;
-  if(!n){if(esp_http_client_is_complete_data_received(h)){ok=received>0&&!carry;break;}vTaskDelay(pdMS_TO_TICKS(10));continue;}
-  received+=(size_t)n;if(received>16000u*2u*45u)goto done;
+  if(n<0){io_error=n;goto done;}
+  if(!n){if(esp_http_client_is_complete_data_received(h)){ok=received>0&&!carry;stage=carry?"incomplete_pcm":"empty_audio";break;}vTaskDelay(pdMS_TO_TICKS(10));continue;}
+  last_progress=bober_now_ms();received+=(size_t)n;
+  if(received>LUMI_TTS_MAX_AUDIO_BYTES){stage="audio_limit_5min";goto done;}
   if(received==(size_t)n)ESP_LOGI(TAG,"TTS first PCM: tts_ms=%lld turn_ms=%lld",(long long)(bober_now_ms()-tts_start),(long long)(bober_now_ms()-g_last_tts_begin_ms));
   size_t total=carry+(size_t)n,even=total&~(size_t)1;
   while(even&&!bober_pcm_push(pcm,even,r->generation)){
-   if(!current(r->generation)||bober_now_ms()>deadline)goto done;
+   if(g_last_play_ms!=last_play){last_play=g_last_play_ms;last_progress=bober_now_ms();}
+   if(!current(r->generation)||g_ws_reconnect||bober_now_ms()>deadline||bober_now_ms()-last_progress>LUMI_TTS_IDLE_MS){stage="backpressure";goto done;}
    vTaskDelay(pdMS_TO_TICKS(10));
   }
   g_last_pcm_ms=bober_now_ms();carry=total-even;if(carry)pcm[0]=pcm[even];
  }
  done:
+ if(!current(r->generation))stage="cancelled";
+ else if(g_ws_reconnect)stage="ASR_reconnect";
+ else if(bober_now_ms()>=deadline)stage="total_timeout";
+ if(ok)ESP_LOGI(TAG,"TTS complete: audio_ms=%u elapsed_ms=%lld",(unsigned)((uint64_t)received*1000u/(16000u*2u)),(long long)(bober_now_ms()-tts_start));
+ else ESP_LOGW(TAG,"TTS interrupted: stage=%s status=%d io_error=%d audio_ms=%u elapsed_ms=%lld reconnect=%d",stage,http_status,io_error,(unsigned)((uint64_t)received*1000u/(16000u*2u)),(long long)(bober_now_ms()-tts_start),g_ws_reconnect);
  free(body);esp_http_client_close(h);esp_http_client_cleanup(h);
  if(ok&&current(r->generation))g_response_complete=true;
  return ok;
@@ -334,7 +350,9 @@ void bober_eleven_task(void *arg){
     if(drained){
      ESP_LOGI(TAG,"Playback drained; microphone resumes after tail_ms=%lld",(long long)(now-g_last_play_ms));
      reply_playback_finished();if(g_uplink)xStreamBufferReset(g_uplink);
-    }else if(now-g_last_tts_begin_ms>90000)break;
+    }else if(lumi_tts_playback_stalled(now,g_last_tts_begin_ms,g_last_pcm_ms,g_last_play_ms)){
+     ESP_LOGW(TAG,"Playback stalled: no PCM/playback progress for 90 s");break;
+    }
    }
 #ifdef LUMI_SOL_ULTRAFAST
    if(sol_idle_expired(now)){ESP_LOGI(TAG,"Session ended after 10 minutes idle");request_wake_wait();break;}

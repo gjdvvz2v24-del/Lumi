@@ -16,7 +16,7 @@ source=r'''
 #define NVS_READONLY 0
 typedef int nvs_handle_t;
 static int scenario;
-static struct { char ssid[33],password[65],openai_key[512],api_key[192],voice_id[96]; } g_cfg;
+static struct { char ssid[33],password[65],openai_key[512],api_key[192],voice_id[96],sol_key[512]; } g_cfg;
 static int nvs_open(const char *ns,int mode,nvs_handle_t *n){(void)ns;(void)mode;*n=1;return scenario==0?-1:0;}
 static void nvs_close(nvs_handle_t n){(void)n;}
 static int nvs_get_str(nvs_handle_t n,const char *key,char *out,size_t *size){
@@ -31,7 +31,7 @@ static int nvs_get_str(nvs_handle_t n,const char *key,char *out,size_t *size){
 int main(void){
  for(scenario=0;scenario<5;scenario++){
   load();assert(!strcmp(g_cfg.voice_id,scenario==4?"custom-voice":BOBER_DEFAULT_VOICE));
-  if(scenario){assert(!strcmp(g_cfg.ssid,"test-credential"));assert(!strcmp(g_cfg.openai_key,"test-credential"));assert(!strcmp(g_cfg.api_key,"test-credential"));}
+  if(scenario){assert(!strcmp(g_cfg.ssid,"test-credential"));assert(!strcmp(g_cfg.openai_key,"test-credential"));assert(!strcmp(g_cfg.api_key,"test-credential"));assert(!strcmp(g_cfg.sol_key,"test-credential"));}
  }
  puts("PASS: Lumi default, missing NVS, old Bober migration, saved Lumi/custom voice and retained credentials");
 }
@@ -50,3 +50,6 @@ assert session['tools']==a['tools'] and session['tool_choice']=='auto' and sessi
 line=next(x for x in header.splitlines() if x.startswith('static const char bober_greeting'))
 assert json.loads(line.split(' = ',1)[1].removesuffix(';'))==a['first_message']
 print('PASS: generated Lumi prompt, greeting, Polish ASR and end-conversation tool')
+
+assert "ciekawostki o kupie" in session["instructions"]
+assert a["sol"]["reasoning_effort"]=="medium" and a["sol"]["max_output_tokens"]==2048

@@ -82,9 +82,9 @@ def extract_reply(response):
 
 def generate(text, profile, prompt, key, tier, previous=None):
     body = {"model": "gpt-6.1-sol", "service_tier": tier,
-            "reasoning": {"effort": "low"}, "stream": True,
+            "reasoning": {"effort": profile.get("sol", {}).get("reasoning_effort", "low")}, "stream": True,
             "instructions": prompt, "input": text,
-            "max_output_tokens": profile["max_output_tokens"], "tools": profile["tools"]}
+            "max_output_tokens": profile.get("sol", {}).get("max_output_tokens", profile["max_output_tokens"]), "tools": profile["tools"]}
     if previous:
         body["previous_response_id"] = previous
     start = time.monotonic()
