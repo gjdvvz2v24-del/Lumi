@@ -4,6 +4,13 @@
 static QueueHandle_t sol_requests;
 static cJSON *sol_template;
 static char sol_previous[160];
+static uint32_t sol_context_generation;
+static bool sol_greeted;
+/* ASR transport reconnect is not a new user conversation. */
+static void sol_begin_generation(uint32_t generation){
+ if(sol_context_generation==generation)return;
+ sol_context_generation=generation;sol_previous[0]=0;sol_greeted=false;
+}
 
 static char *sol_prepare(char *session_json){
  if(!session_json)return NULL;

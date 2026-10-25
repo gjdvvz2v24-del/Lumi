@@ -64,6 +64,10 @@ static void esp_http_client_close(int h){(void)h;}
 static void esp_http_client_cleanup(int h){(void)h;}
 #include "sol_ultrafast.inc"
 int main(void){
+ sol_begin_generation(7);strcpy(sol_previous,"keep-history");sol_greeted=true;
+ sol_begin_generation(7);assert(!strcmp(sol_previous,"keep-history")&&sol_greeted);
+ sol_begin_generation(8);assert(!sol_previous[0]&&!sol_greeted);
+ sol_begin_generation(7);
  char *update=sol_prepare(strdup(bober_session_update));assert(update);
  cJSON *j=cJSON_Parse(update);free(update);
  cJSON *session=cJSON_GetObjectItem(j,"session");

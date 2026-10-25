@@ -175,7 +175,7 @@ static void handle_message(void){
    }else fail();free(text);
   }
  }else if(!strcmp(type,"error")||!strcmp(type,"conversation.item.input_audio_transcription.failed")){
-  ESP_LOGE(TAG,"OpenAI event error (details omitted); verify account/key/model access");fail();
+  ESP_LOGE(TAG,"OpenAI event error code=%s (details omitted)",str(cJSON_GetObjectItem(root,"error"),"code"));fail();
  }
  cJSON_Delete(root);
 }
@@ -183,7 +183,10 @@ static void ws_event(void *arg,esp_event_base_t base,int32_t event,void *data){
  (void)arg;(void)base;if(!current(ws_generation))return;
  esp_websocket_event_data_t *ev=data;
  if(event==WEBSOCKET_EVENT_CONNECTED){transport=true;}
- else if(event==WEBSOCKET_EVENT_DISCONNECTED||event==WEBSOCKET_EVENT_CLOSED||event==WEBSOCKET_EVENT_ERROR){transport=false;fail();}
+ else if(event==WEBSOCKET_EVENT_DISCONNECTED||event==WEBSOCKET_EVENT_CLOSED||event==WEBSOCKET_EVENT_ERROR){
+  ESP_LOGW(TAG,"ASR transport event=%ld generation=%lu phase=%d",(long)event,(unsigned long)ws_generation,g_phase);
+  transport=false;fail();
+ }
  else if(event==WEBSOCKET_EVENT_DATA&&ev){
   if(ev->op_code==0x9||ev->op_code==0xa)return;
   if(ev->op_code==0x8){transport=false;fail();return;}
@@ -270,7 +273,7 @@ void bober_eleven_task(void *arg){
   g_phase=BOBER_CONNECTING;g_response_complete=false;assembling=false;message_len=0;
   xQueueReset(replies);bober_pcm_reset();if(g_uplink)xStreamBufferReset(g_uplink);
 #ifdef LUMI_SOL_ULTRAFAST
-  xQueueReset(sol_requests);sol_previous[0]=0;
+  xQueueReset(sol_requests);sol_begin_generation(gen);
 #endif
   esp_websocket_client_config_t cfg={.uri="wss://api.openai.com/v1/realtime?model=" BOBER_OPENAI_MODEL,
    .headers=headers,.crt_bundle_attach=esp_crt_bundle_attach,.buffer_size=4096,.task_stack=12288,
@@ -280,6 +283,9 @@ void bober_eleven_task(void *arg){
   esp_websocket_register_events(ws,WEBSOCKET_EVENT_ANY,ws_event,NULL);
   esp_err_t e=esp_websocket_client_start(ws);
   int64_t start=bober_now_ms();bool hello=false,greeted=false;
+#ifdef LUMI_SOL_ULTRAFAST
+  greeted=sol_greeted;
+#endif
   while(e==ESP_OK&&current(gen)&&!g_ws_reconnect){
    int64_t now=bober_now_ms();
    if(!hello&&transport){
@@ -296,8 +302,11 @@ void bober_eleven_task(void *arg){
    if(configured&&!greeted){
     greeted=true;g_phase=BOBER_SPEAKING;g_response_complete=false;g_last_tts_begin_ms=now;
     r->generation=gen;strlcpy(r->text,bober_greeting,sizeof(r->text));if(!speak(r))break;
+#ifdef LUMI_SOL_ULTRAFAST
+    sol_greeted=true;
+#endif
    }
-   if(xQueueReceive(replies,r,0)==pdTRUE&&r->generation==gen){if(!speak(r))break;}
+   if(xQueueReceive(replies,r,0)==pdTRUE&&r->generation==gen){if(!speak(r)){ESP_LOGW(TAG,"Reconnect: queued TTS failed");break;}}
 #ifdef LUMI_SOL_ULTRAFAST
    if(xQueueReceive(sol_requests,r,0)==pdTRUE&&current(r->generation)){
     if(!sol_generate(r)){
@@ -305,7 +314,7 @@ void bober_eleven_task(void *arg){
      ESP_LOGE(TAG,"Sol request failed; no automatic retry or backend fallback");
      strlcpy(r->text,"Nie udało mi się pobrać odpowiedzi. Spróbuj jeszcze raz.",sizeof(r->text));
     }
-    if(!current(gen)||!speak(r))break;
+    if(!current(gen)||!speak(r)){ESP_LOGW(TAG,"Reconnect: Sol TTS failed or session cancelled");break;}
    }
 #endif
    if(configured&&g_phase==BOBER_SPEAKING){

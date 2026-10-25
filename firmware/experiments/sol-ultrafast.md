@@ -162,6 +162,18 @@ płatne usługi. Domyślne logi nie zawierają kluczy ani treści rozmowy.
   urządzenie potwierdziło `LUMI_SOL_KEY_SAVED`. SHA-256 nowej aplikacji:
   `7caacb016984896190f1685d301f14d8b3af5e89d1f40d91e4094c30032fbb10`.
 
+### Ciągłość rozmowy po reconnect
+
+Użytkownik potwierdził działanie Sol na urządzeniu po rozdzieleniu kluczy,
+ale zgłosił częste resetowanie rozmowy. Znaleziono niezależny błąd: reconnect
+transportu ASR zerował `previous_response_id` Sol i ponownie uruchamiał powitanie.
+Historia i znacznik powitania są teraz przypisane do generacji rozmowy użytkownika,
+a nie do pojedynczego połączenia WebSocket. Nowe wybudzenie nadal tworzy nową
+rozmowę. Test C sprawdza oba przypadki. Dodatkowe logi zawierają kod błędu API,
+typ zdarzenia transportu i błąd TTS, bez sekretów i treści rozmowy.
+Nie potwierdzono jeszcze przyczyny samych rozłączeń ani skuteczności poprawki
+w dłuższej rozmowie na sprzęcie.
+
 Dokumentacja: [Ultrafast](https://developers.openai.com/api/docs/guides/ultrafast-mode),
 [transkrypcja](https://developers.openai.com/api/docs/guides/speech-to-text),
 [strumieniowanie Responses](https://developers.openai.com/api/docs/guides/streaming-responses).
