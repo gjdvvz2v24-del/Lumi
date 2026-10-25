@@ -63,6 +63,9 @@ static void queue_reply(const char *text){
  if(xQueueSend(replies,r,0)!=pdTRUE)fail();
  free(r);
 }
+#ifdef LUMI_SOL_ULTRAFAST
+#include "sol_ultrafast.inc"
+#endif
 /* Explicit diagnostic build only: conversation text is visible on local USB. */
 static void trace_event(cJSON *root){
 #ifdef BOBER_OPENAI_DIAGNOSTICS
@@ -106,6 +109,9 @@ static void handle_message(void){
  if(atomic_load(&end_after_reply)){cJSON_Delete(root);return;}
  if(!strcmp(type,"conversation.item.input_audio_transcription.completed")){
   if(lumi_is_goodbye(str(root,"transcript")))request_wake_wait();
+#ifdef LUMI_SOL_ULTRAFAST
+  else sol_submit(str(root,"transcript"));
+#endif
  }else if(!strcmp(type,"session.updated")){
   cJSON *session=cJSON_GetObjectItem(root,"session");
   cJSON *modalities=cJSON_GetObjectItem(session,"output_modalities");
@@ -121,6 +127,9 @@ static void handle_message(void){
     !strcmp(str(cJSON_GetArrayItem(tools,0),"name"),"end_conversation")&&!strcmp(str(format,"type"),"audio/pcm")&&
     cJSON_IsNumber(rate)&&rate->valueint==24000&&!strcmp(str(asr,"language"),"pl");
   if(!configured)fail();
+#ifdef LUMI_SOL_ULTRAFAST
+  else if(!cJSON_IsFalse(cJSON_GetObjectItem(cJSON_GetObjectItem(input,"turn_detection"),"create_response")))fail();
+#endif
   else {g_ws_ready=true;g_phase=BOBER_CONNECTING;ESP_LOGI(TAG,"OpenAI ready: text output, Polish transcription, local end_conversation");}
  }else if(!strcmp(type,"response.created")){
   g_phase=BOBER_SPEAKING;g_response_complete=false;g_last_tts_begin_ms=bober_now_ms();bober_pcm_reset();
@@ -241,6 +250,11 @@ static bool wait_clock(void){
 }
 void bober_eleven_task(void *arg){
  (void)arg;ws_mutex=xSemaphoreCreateMutex();replies=xQueueCreate(1,sizeof(reply_t));
+#ifdef LUMI_SOL_ULTRAFAST
+ sol_requests=xQueueCreate(1,sizeof(reply_t));
+ if(!sol_requests){vTaskDelete(NULL);return;}
+ ESP_LOGW(TAG,"EXPERIMENT: Sol Ultrafast responses; Realtime only ASR/VAD");
+#endif
  if(!ws_mutex||!replies){ESP_LOGE(TAG,"allocation failed");vTaskDelete(NULL);return;}
  esp_sntp_config_t sync=ESP_NETIF_SNTP_DEFAULT_CONFIG("pool.ntp.org");esp_netif_sntp_init(&sync);
  reply_t *r=malloc(sizeof(*r));if(!r){vTaskDelete(NULL);return;}
@@ -255,6 +269,9 @@ void bober_eleven_task(void *arg){
   ws_generation=gen;transport=false;configured=false;g_ws_ready=false;g_ws_reconnect=false;
   g_phase=BOBER_CONNECTING;g_response_complete=false;assembling=false;message_len=0;
   xQueueReset(replies);bober_pcm_reset();if(g_uplink)xStreamBufferReset(g_uplink);
+#ifdef LUMI_SOL_ULTRAFAST
+  xQueueReset(sol_requests);sol_previous[0]=0;
+#endif
   esp_websocket_client_config_t cfg={.uri="wss://api.openai.com/v1/realtime?model=" BOBER_OPENAI_MODEL,
    .headers=headers,.crt_bundle_attach=esp_crt_bundle_attach,.buffer_size=4096,.task_stack=12288,
    .network_timeout_ms=10000,.disable_auto_reconnect=true,.ping_interval_sec=18};
@@ -267,6 +284,9 @@ void bober_eleven_task(void *arg){
    int64_t now=bober_now_ms();
    if(!hello&&transport){
     char *session_json=bober_prompt_session(bober_session_update);
+#ifdef LUMI_SOL_ULTRAFAST
+    session_json=sol_prepare(session_json);
+#endif
     if(!session_json){ESP_LOGE(TAG,"Cannot load prompt configuration");break;}
     hello=send_text(session_json,strlen(session_json));free(session_json);
    }
@@ -278,6 +298,16 @@ void bober_eleven_task(void *arg){
     r->generation=gen;strlcpy(r->text,bober_greeting,sizeof(r->text));if(!speak(r))break;
    }
    if(xQueueReceive(replies,r,0)==pdTRUE&&r->generation==gen){if(!speak(r))break;}
+#ifdef LUMI_SOL_ULTRAFAST
+   if(xQueueReceive(sol_requests,r,0)==pdTRUE&&current(r->generation)){
+    if(!sol_generate(r)){
+     if(!current(gen))break;
+     ESP_LOGE(TAG,"Sol request failed; no automatic retry or backend fallback");
+     strlcpy(r->text,"Nie udało mi się pobrać odpowiedzi. Spróbuj jeszcze raz.",sizeof(r->text));
+    }
+    if(!current(gen)||!speak(r))break;
+   }
+#endif
    if(configured&&g_phase==BOBER_SPEAKING){
     if(!lumi_reaction_busy()&&g_response_complete&&bober_pcm_available()==0&&now-g_last_play_ms>200&&now-g_last_pcm_ms>350){
      reply_playback_finished();if(g_uplink)xStreamBufferReset(g_uplink);

@@ -38,7 +38,9 @@ Modele wybudzania są eksperymentalne; skuteczność dla różnych osób nie jes
 
 Prototyp hostowy toru WAV → polska transkrypcja → Sol 6.1 Ultrafast → obecny głos
 Lumi opisuje [instrukcja eksperymentu](firmware/experiments/sol-ultrafast.md).
-To test usług na komputerze; firmware i paczka do flashowania nadal używają Realtime.
+Na tej gałęzi jest też opcjonalny firmware USB `LUMI_SOL_ULTRAFAST`: Realtime
+obsługuje ASR/VAD, Sol generuje odpowiedzi. Domyślny build i gotowa paczka nadal
+używają standardowego backendu Realtime.
 
 ## Pakowanie firmware
 

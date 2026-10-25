@@ -84,15 +84,71 @@ odrzucenie niekompletnej odpowiedzi, pojedyncze pożegnanie oraz błędne narzę
 
 ## Granice eksperymentu i dalsza integracja
 
-To prototyp hostowy przez HTTPS/SSE, a nie nowy backend firmware.
-Nie zmienia `main/eleven.c`, generatora profilu, `dist/` ani paczki produkcyjnej.
-Nie ma ciągłego mikrofonu, VAD, przerwań, odtwarzania na ESP32 ani pełnej sesji
-wieloturowej w CLI. Nie przeprowadzono flashowania ani testu rozmowy na urządzeniu.
+Skrypt Pythona to prototyp hostowy przez HTTPS/SSE. Nie ma ciągłego mikrofonu,
+VAD, przerwań, odtwarzania na ESP32 ani pełnej sesji wieloturowej w CLI.
+Generator profilu, `dist/` i paczka produkcyjna pozostają bez zmian.
 
 Do wariantu sprzętowego potrzebna jest obsługa transkrypcji i Responses w firmware
 lub jawnie skonfigurowany most na serwerze, a następnie zachowanie istniejących
 bramek mikrofonu, wybudzania, sesji, kolejki audio i kończenia rozmowy.
 Nie wystarczy podmiana nazwy modelu w sesji Realtime.
+
+## Eksperymentalny firmware USB
+
+Opcja CMake `LUMI_SOL_ULTRAFAST` jest domyślnie wyłączona. Jej włączenie dodaje
+wariant hybrydowy: obecna sesja Realtime dostarcza transkrypcję i VAD, a
+`create_response=false` blokuje generowanie odpowiedzi przez model Realtime.
+Odpowiedź generuje Sol 6.1 przez HTTPS Responses, z wymaganym tierem Ultrafast.
+To nie jest pełne usunięcie Realtime i nie jest wariantem oszczędnościowym.
+
+```sh
+# Z katalogu firmware/, po aktywacji ESP-IDF 5.4.3:
+idf.py -DLUMI_SOL_ULTRAFAST=ON build
+# Powrót do standardowego backendu wymaga jawnego OFF w tym samym build/:
+idf.py -DLUMI_SOL_ULTRAFAST=OFF build
+```
+
+Backend działa w istniejącym zadaniu sieciowym, poza callbackiem WebSocket.
+Na czas Sol/TTS blokuje uplink mikrofonu. Zawartość promptfs jest przekazywana
+do Sol, a `previous_response_id` utrzymuje historię do końca sesji/ponownego
+połączenia. Używany jest OpenAI key z NVS urządzenia, który musi mieć również
+uprawnienia Responses i Ultrafast. Klucz testowy z komputera nie jest osadzany
+w binarce ani przenoszony do NVS. Głos i klucz ElevenLabs pozostają z NVS.
+TTS czeka na pełną odpowiedź. Firmware sprawdza status i zwrócony tier,
+obsługuje pożegnanie jeden raz i odrzuca wynik po zmianie generacji sesji.
+Błąd API nie uruchamia automatycznego ponawiania ani modelu zastępczego.
+
+Test bez połączenia do usług, wykonujący rzeczywisty kod C z atrapą HTTP:
+
+```sh
+SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk \
+  IDF_PATH=/sciezka/do/esp-idf python3 tests/test_sol_firmware.py
+```
+
+Przed USB należy zachować kopię flasha poza repo, porównać tablicę partycji
+urządzenia z buildem i zapisać wyłącznie aplikację pod `0x10000`.
+NVS, bootloader, tablica partycji i promptfs nie wymagają zmiany.
+Po restarcie urządzenie lokalnie oczekuje na wybudzenie; test rozmowy uruchamia
+płatne usługi. Domyślne logi nie zawierają kluczy ani treści rozmowy.
+
+### Walidacja firmware 25.10.2026
+
+- Build ESP-IDF 5.4.3 z `LUMI_SOL_ULTRAFAST=ON` przeszedł.
+- Test rzeczywistego backendu C z atrapą HTTP i sanitizerami przeszedł:
+  konfiguracja ASR/VAD bez odpowiedzi Realtime, blokowanie nakładających się tur,
+  historia, tekst, pojedyncze pożegnanie, anulowanie, błędy HTTP, niewłaściwy tier
+  i odpowiedzi niekompletne. Istniejące testy OpenAI, profilu i promptfs przeszły.
+- Wykonano pełną prywatną kopię flasha 8 MB; tablica partycji pasuje do buildu.
+- Zapisano przez USB wyłącznie aplikację pod `0x10000`, hash zapisu zweryfikowany.
+  SHA-256 aplikacji: `62b1ab4b535a4b041cad0a7451be75fe5bd1b938437422a21c32993823f65a04`.
+- Odczyt po zapisie potwierdził identyczne bajty tablicy partycji, NVS, PHY i promptfs.
+- Start sprzętu potwierdził log `EXPERIMENT: Sol Ultrafast responses; Realtime only ASR/VAD`,
+  bez paniki i bez rozpoczęcia sesji API podczas kontroli startu.
+- Pierwsza próba rozmowy użytkownika zwróciła HTTP 401: istniejący klucz urządzenia
+  nie ma `api.responses.write`. Potrzebna zmiana Responses → Write w uprawnieniach
+  tego klucza; nie wymaga ponownego flashowania. Po zgodzie użytkownika zapisano
+  Responses → Write; panel ostrzega o kilkuminutowej propagacji uprawnień.
+  Udanej rozmowy Sol na urządzeniu jeszcze nie potwierdzono.
 
 Dokumentacja: [Ultrafast](https://developers.openai.com/api/docs/guides/ultrafast-mode),
 [transkrypcja](https://developers.openai.com/api/docs/guides/speech-to-text),
