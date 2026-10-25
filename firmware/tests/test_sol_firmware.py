@@ -75,7 +75,7 @@ int main(void){
  cJSON *session=cJSON_GetObjectItem(j,"session");
  cJSON *vad=cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(session,"audio"),"input"),"turn_detection");
  assert(cJSON_IsFalse(cJSON_GetObjectItem(vad,"create_response")));
- assert(cJSON_GetObjectItem(vad,"silence_duration_ms")->valueint==350);
+ assert(cJSON_GetObjectItem(vad,"silence_duration_ms")->valueint==650);
  assert(!strcmp(str(sol_template,"model"),"gpt-6.1-sol"));
  assert(!strcmp(str(sol_template,"service_tier"),"ultrafast"));
  assert(!strcmp(str(sol_template,"instructions"),str(session,"instructions")));cJSON_Delete(j);

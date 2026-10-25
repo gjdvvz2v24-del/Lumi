@@ -188,6 +188,10 @@ Domyślny wariant Realtime zachowuje stare progi.
 
 ### Wariant mniejszego opóźnienia
 
+**Aktualizacja po teście użytkownika:** próg 350 ms zbyt wcześnie kończył
+wypowiedzi i ucinał zdania. Przywrócono **650 ms**; reuse HTTPS, krótka pauza
+mikrofonu po odtwarzaniu i limit bezczynności pozostają. Poniżej opis próby 350 ms.
+
 - Tylko w eksperymencie Sol: server VAD czeka 350 ms ciszy zamiast 650 ms.
   Skraca to okno oczekiwania o 300 ms, ale może wcześniej uznawać dłuższą pauzę
   wewnątrz zdania za koniec tury.

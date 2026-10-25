@@ -27,7 +27,7 @@ static char *sol_prepare(char *session_json){
  cJSON *tools=cJSON_GetObjectItem(session,"tools");
  if(!cJSON_IsObject(vad)||!cJSON_IsArray(tools)){cJSON_Delete(root);return NULL;}
  cJSON_ReplaceItemInObject(vad,"create_response",cJSON_CreateFalse());
- cJSON_ReplaceItemInObject(vad,"silence_duration_ms",cJSON_CreateNumber(350));
+ cJSON_ReplaceItemInObject(vad,"silence_duration_ms",cJSON_CreateNumber(650));
  cJSON_Delete(sol_template);sol_template=cJSON_CreateObject();
  cJSON *reason=cJSON_CreateObject();
  bool ok=sol_template&&reason&&
