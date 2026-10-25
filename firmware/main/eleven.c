@@ -5,6 +5,7 @@
 #include "openai_protocol.h"
 #include "session_control.h"
 #include "tts_delivery.h"
+#include "playback_gate.h"
 #include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -318,7 +319,13 @@ void bober_eleven_task(void *arg){
    }
 #endif
    if(configured&&g_phase==BOBER_SPEAKING){
-    if(!lumi_reaction_busy()&&g_response_complete&&bober_pcm_available()==0&&now-g_last_play_ms>200&&now-g_last_pcm_ms>350){
+#ifdef LUMI_SOL_ULTRAFAST
+    bool drained=lumi_sol_mic_can_resume(g_response_complete,bober_pcm_available(),lumi_reaction_busy(),now,g_last_play_ms);
+#else
+    bool drained=!lumi_reaction_busy()&&g_response_complete&&bober_pcm_available()==0&&now-g_last_play_ms>200&&now-g_last_pcm_ms>350;
+#endif
+    if(drained){
+     ESP_LOGI(TAG,"Playback drained; microphone resumes after tail_ms=%lld",(long long)(now-g_last_play_ms));
      reply_playback_finished();if(g_uplink)xStreamBufferReset(g_uplink);
     }else if(now-g_last_tts_begin_ms>90000)break;
    }

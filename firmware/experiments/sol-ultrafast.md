@@ -174,6 +174,18 @@ typ zdarzenia transportu i błąd TTS, bez sekretów i treści rozmowy.
 Nie potwierdzono jeszcze przyczyny samych rozłączeń ani skuteczności poprawki
 w dłuższej rozmowie na sprzęcie.
 
+### Powrót mikrofonu po TTS
+
+Po zgłoszeniu zbyt późnego włączania mikrofonu skrócono w wariancie Sol pauzę
+po ostatniej porcji odtwarzanego PCM z >200 ms do >=120 ms. Usunięto dodatkowy
+warunek 350 ms od odbioru PCM z sieci: przy `g_response_complete=true` producent
+już zakończył pracę. Nadal wymagane są pusty bufor PCM i brak aktywnej reakcji.
+120 ms obejmuje domyślną kolejkę I2S (6 * 240 ramek / 16 kHz = 90 ms), ostatni
+blok 20 ms i margines. To nie włącza przerywania w trakcie mowy ani AEC.
+Testy bramki, rzeczywistego zadania głośnika i protokołu przeszły. Ocena
+szybkości przejęcia głosu i ewentualnego echa pozostaje testem użytkownika.
+Domyślny wariant Realtime zachowuje stare progi.
+
 Dokumentacja: [Ultrafast](https://developers.openai.com/api/docs/guides/ultrafast-mode),
 [transkrypcja](https://developers.openai.com/api/docs/guides/speech-to-text),
 [strumieniowanie Responses](https://developers.openai.com/api/docs/guides/streaming-responses).
