@@ -20,7 +20,7 @@ HARNESS = r'''
 typedef struct {uint32_t generation;char text[4096];} reply_t;
 typedef int QueueHandle_t;
 typedef int esp_http_client_handle_t;
-typedef struct {const char *url;int method,timeout_ms,buffer_size;void *crt_bundle_attach;bool disable_auto_redirect;} esp_http_client_config_t;
+typedef struct {const char *url;int method,timeout_ms,buffer_size;void *crt_bundle_attach;bool disable_auto_redirect,keep_alive_enable;} esp_http_client_config_t;
 #define ESP_OK 0
 #define HTTP_METHOD_POST 1
 #define MALLOC_CAP_SPIRAM 1
@@ -43,6 +43,7 @@ static const char *fake_response;
 static int fake_status=200;
 static size_t read_pos;
 static bool cancel_on_read;
+static int init_count,close_count,open_count,open_failures;
 static char request_body[32768];
 static const char *str(cJSON *j,const char *key){cJSON *v=cJSON_GetObjectItemCaseSensitive(j,key);return cJSON_IsString(v)?v->valuestring:"";}
 static bool current(uint32_t gen){return active&&gen==7;}
@@ -52,19 +53,20 @@ static int64_t bober_now_ms(void){return 100;}
 static void vTaskDelay(int n){(void)n;}
 static int xQueueSend(int q,reply_t *r,int wait){(void)q;(void)wait;queued=*r;return 1;}
 static void *heap_caps_malloc(size_t n,int caps){(void)caps;return malloc(n);}
-static int esp_http_client_init(esp_http_client_config_t *c){(void)c;read_pos=0;return 1;}
+static int esp_http_client_init(esp_http_client_config_t *c){assert(c->keep_alive_enable);init_count++;read_pos=0;return 1;}
 static void esp_http_client_set_header(int h,const char *k,const char *v){(void)h;(void)k;(void)v;}
-static int esp_http_client_open(int h,size_t n){(void)h;(void)n;return 0;}
+static int esp_http_client_open(int h,size_t n){(void)h;(void)n;read_pos=0;open_count++;if(open_failures){open_failures--;return -1;}return 0;}
 static int esp_http_client_write(int h,const char *s,size_t n){(void)h;assert(n<sizeof(request_body));memcpy(request_body,s,n);request_body[n]=0;return (int)n;}
 static int esp_http_client_fetch_headers(int h){(void)h;return 0;}
 static int esp_http_client_get_status_code(int h){(void)h;return fake_status;}
 static int esp_http_client_read(int h,char *s,size_t n){(void)h;if(cancel_on_read)active=false;size_t left=strlen(fake_response)-read_pos;if(n>left)n=left;memcpy(s,fake_response+read_pos,n);read_pos+=n;return (int)n;}
 static bool esp_http_client_is_complete_data_received(int h){(void)h;return read_pos==strlen(fake_response);}
-static void esp_http_client_close(int h){(void)h;}
+static void esp_http_client_close(int h){(void)h;close_count++;}
 static void esp_http_client_cleanup(int h){(void)h;}
 #include "sol_ultrafast.inc"
 int main(void){
  sol_begin_generation(7);strcpy(sol_previous,"keep-history");sol_greeted=true;
+ assert(!sol_idle_expired(600100));assert(sol_idle_expired(600101));
  sol_begin_generation(7);assert(!strcmp(sol_previous,"keep-history")&&sol_greeted);
  sol_begin_generation(8);assert(!sol_previous[0]&&!sol_greeted);
  sol_begin_generation(7);
@@ -73,6 +75,7 @@ int main(void){
  cJSON *session=cJSON_GetObjectItem(j,"session");
  cJSON *vad=cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(session,"audio"),"input"),"turn_detection");
  assert(cJSON_IsFalse(cJSON_GetObjectItem(vad,"create_response")));
+ assert(cJSON_GetObjectItem(vad,"silence_duration_ms")->valueint==350);
  assert(!strcmp(str(sol_template,"model"),"gpt-6.1-sol"));
  assert(!strcmp(str(sol_template,"service_tier"),"ultrafast"));
  assert(!strcmp(str(sol_template,"instructions"),str(session,"instructions")));cJSON_Delete(j);
@@ -80,8 +83,11 @@ int main(void){
  sol_submit("Ignored overlapping turn");assert(!strcmp(queued.text,"Cześć"));
  fake_response="{\"id\":\"resp_ok\",\"status\":\"completed\",\"service_tier\":\"ultrafast\",\"output\":[{\"type\":\"reasoning\"},{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":\"Hej!\"}]}]}";
  assert(sol_generate(&queued));assert(!strcmp(queued.text,"Hej!")&&!strcmp(sol_previous,"resp_ok"));
+ assert(init_count==1&&close_count==0&&open_count==1);
  assert(strstr(request_body,"Cześć")&&!strstr(request_body,"previous_response_id"));
  assert(sol_generate(&queued));assert(strstr(request_body,"previous_response_id"));
+ assert(init_count==1&&close_count==0&&open_count==2);
+ open_failures=1;assert(sol_generate(&queued));assert(init_count==1&&close_count==1&&open_count==4);
  g_cfg.sol_key[0]=0;assert(!sol_generate(&queued));strcpy(g_cfg.sol_key,"test-key");
  fake_response="{\"id\":\"wrong\",\"status\":\"incomplete\",\"service_tier\":\"ultrafast\",\"output\":[]}";
  assert(!sol_generate(&queued));assert(!strcmp(sol_previous,"resp_ok"));
@@ -91,6 +97,7 @@ int main(void){
  assert(sol_generate(&queued));assert(!strcmp(queued.text,"Pa!")&&atomic_load(&end_after_reply));
  cancel_on_read=true;assert(!sol_generate(&queued));assert(!strcmp(sol_previous,"bye"));
  active=true;cancel_on_read=false;fake_status=403;assert(!sol_generate(&queued));
+ assert(!sol_http);
  cJSON_Delete(sol_template);puts("PASS: actual C backend config, queue gate, text, history, incomplete/tier/error rejection, farewell, cancellation");
 }
 '''

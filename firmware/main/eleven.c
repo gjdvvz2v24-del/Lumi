@@ -207,6 +207,7 @@ static esp_err_t header(esp_http_client_event_t *ev){
 /* Network owner performs TTS outside WebSocket callbacks. SDK keeps receiving
    WebSocket frames while this task streams HTTP into the existing PCM ring. */
 static bool speak(const reply_t *r){
+ int64_t tts_start=bober_now_ms();
  ESP_LOGI(TAG,"TTS TLS heap: internal_free=%u internal_largest=%u psram_free=%u",
   (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT),
   (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT),
@@ -234,6 +235,7 @@ static bool speak(const reply_t *r){
   if(n<0)goto done;
   if(!n){if(esp_http_client_is_complete_data_received(h)){ok=received>0&&!carry;break;}vTaskDelay(pdMS_TO_TICKS(10));continue;}
   received+=(size_t)n;if(received>16000u*2u*45u)goto done;
+  if(received==(size_t)n)ESP_LOGI(TAG,"TTS first PCM: tts_ms=%lld turn_ms=%lld",(long long)(bober_now_ms()-tts_start),(long long)(bober_now_ms()-g_last_tts_begin_ms));
   size_t total=carry+(size_t)n,even=total&~(size_t)1;
   while(even&&!bober_pcm_push(pcm,even,r->generation)){
    if(!current(r->generation)||bober_now_ms()>deadline)goto done;
@@ -329,7 +331,11 @@ void bober_eleven_task(void *arg){
      reply_playback_finished();if(g_uplink)xStreamBufferReset(g_uplink);
     }else if(now-g_last_tts_begin_ms>90000)break;
    }
+#ifdef LUMI_SOL_ULTRAFAST
+   if(sol_idle_expired(now)){ESP_LOGI(TAG,"Session ended after 10 minutes idle");request_wake_wait();break;}
+#else
    if(now-start>600000){request_wake_wait();break;}
+#endif
    vTaskDelay(pdMS_TO_TICKS(20));
   }
   if(atomic_exchange(&end_after_reply,false))request_wake_wait();
@@ -340,6 +346,9 @@ void bober_eleven_task(void *arg){
   xSemaphoreGive(ws_mutex);bober_pcm_reset();g_response_complete=false;
   xQueueReset(replies);if(g_uplink)xStreamBufferReset(g_uplink);
   finish_wake_wait();
+#ifdef LUMI_SOL_ULTRAFAST
+  if(!current(gen))sol_http_drop();
+#endif
   if(current(gen)){g_phase=BOBER_CONNECTING;for(int i=0;i<30&&current(gen);i++)vTaskDelay(pdMS_TO_TICKS(100));}
  }
 }

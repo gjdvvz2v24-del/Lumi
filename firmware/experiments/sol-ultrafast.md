@@ -186,6 +186,31 @@ Testy bramki, rzeczywistego zadania głośnika i protokołu przeszły. Ocena
 szybkości przejęcia głosu i ewentualnego echa pozostaje testem użytkownika.
 Domyślny wariant Realtime zachowuje stare progi.
 
+### Wariant mniejszego opóźnienia
+
+- Tylko w eksperymencie Sol: server VAD czeka 350 ms ciszy zamiast 650 ms.
+  Skraca to okno oczekiwania o 300 ms, ale może wcześniej uznawać dłuższą pauzę
+  wewnątrz zdania za koniec tury.
+- Klient HTTPS Sol pozostaje otwarty po poprawnej odpowiedzi, zamiast zamykać
+  transport po każdej turze. Po 20 s przerwy tworzony jest nowy klient; błędy,
+  koniec sesji i zmiana generacji też zamykają stary. Jeśli otwarcie żądania na
+  zachowanym połączeniu zawiedzie, wolno raz ponowić samo otwarcie przed wysłaniem
+  treści POST. Po wysłaniu body/generowaniu nie ma automatycznego retry.
+  Log `reused_client` oznacza użycie tego samego klienta, nie dowód braku handshake.
+- Limit 10 minut w wariancie Sol dotyczy teraz bezczynności, odnawianej przez
+  rozpoznaną turę i poprawną odpowiedź; nie kończy aktywnej rozmowy po 10 minutach
+  od połączenia ASR. Limit 1024 tokenów jednej odpowiedzi pozostaje bez zmian.
+- Log `TTS first PCM` mierzy czas TTS i czas od przekazania transkrypcji do Sol
+  do pierwszych bajtów PCM; nie obejmuje oczekiwania VAD ani samej transkrypcji.
+
+Test C sprawdza zachowanie jednego klienta w kolejnych turach, bezpieczne ponowienie
+samego otwarcia starego socketu, zamykanie po błędzie, VAD 350 ms i limit bezczynności.
+Nadal jest to tor szeregowy ASR → pełna odpowiedź Sol → TTS. Nie wdrożono jeszcze
+strumieniowego przekazywania tekstu do TTS. W pierwszych krótkich próbach hostowych
+różnica między pierwszym fragmentem tekstu a końcem odpowiedzi wynosiła ok. 0,1–0,2 s,
+więc w tym wariancie najpierw skracamy VAD i narzut połączeń. Przyspieszenie całego
+toru i zachowanie przy trzech połączeniach TLS wymagają oceny na urządzeniu.
+
 Dokumentacja: [Ultrafast](https://developers.openai.com/api/docs/guides/ultrafast-mode),
 [transkrypcja](https://developers.openai.com/api/docs/guides/speech-to-text),
 [strumieniowanie Responses](https://developers.openai.com/api/docs/guides/streaming-responses).
