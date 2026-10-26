@@ -317,3 +317,23 @@ PCM drains. These tests make no API or device calls.
 
 Codec output volume is now 95 percent (previously 90). The changes are built
 but **not flashed**; live audio, loudness and Wi-Fi selection await deployment.
+
+
+### USB deployment — 2026-10-26
+
+Deployed the prepared app from source commit `82ca320` and the matching promptfs
+on the physical AtomS3R / Atomic Voice Base over `/dev/cu.usbmodem1101`.
+Application SHA-256:
+`c1527720aa494ba09a8c708e3590dfbd51191168390a4a59f70d86db9a7aae31`.
+Both flash hashes were verified. Protected partition-table/NVS/PHY bytes were
+compared before/after application flashing and matched; promptfs readback matched
+the built image. Boot had the experimental backend marker, no panic and a DHCP
+address.
+
+After flashing, the user's three Wi-Fi profiles were saved through the new
+Wi-Fi-only USB command. Credentials remain outside the repository. A subsequent
+restart scanned networks, selected profile 1 at -52 dBm and obtained an IP address.
+This verifies physical startup selection and profile provisioning. Re-selection
+following an actual link loss, spoken response quality, physical volume and a
+long live story have not yet been retested. The three/five-minute TTS evidence
+above remains a native synthetic test, not a live ElevenLabs/device conversation.
