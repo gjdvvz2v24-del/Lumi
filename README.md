@@ -56,11 +56,11 @@ Sam prompt można wgrać przez `python3 update_prompt_usb.py PORT_USB`. Aktualiz
 
 Bez połączenia Wi-Fi Atom odtwarza lokalne, krótkie chrapnięcie co 5 sekund. Po połączeniu z siecią dźwięk ustaje.
 
-Po starcie Lumi czeka na hasło „Hej Lumi”, „Luuu-miiii” lub mocne potrząśnięcie. Po zakończeniu rozmowy wraca do oczekiwania. Potrząsanie nie odtwarza efektów dźwiękowych. Krótki przycisk wraca do oczekiwania, długie przytrzymanie usypia urządzenie.
+Po starcie Lumi czeka na hasło „Hej Lumi”, „Luuu-miiii” lub mocne potrząśnięcie. Po zakończeniu rozmowy wraca do oczekiwania. Potrząsanie nie odtwarza efektów dźwiękowych. Ekran i podświetlenie gasną po 60 s od startu. Krótkie naciśnięcie przy wygaszonym ekranie włącza go na kolejne 60 s, bez przerwania rozmowy. Przy włączonym ekranie krótki przycisk restartuje urządzenie do oczekiwania; długie przytrzymanie usypia urządzenie.
 
 Aktualny prompt wymaga krótkiej, prostej rozmowy bez nieproszonych porad, komentarzy do emocji, schlebiania i uzasadniania własnych reakcji. Użytkownik potwierdził poprawę stylu 24.10.2026.
 
-Modele wybudzania są eksperymentalne; skuteczność dla różnych osób nie jest gwarantowana. W wariancie Sol prośba o zaśpiewanie czegoś lub piosenkę wywołuje ElevenLabs Music: losowy temat i styl, nowy polski tekst, wokal i akompaniament, 60 sekund. To oddzielny generator muzyki, bez gwarancji głosu używanego w TTS. Zwykła rozmowa o piosenkach nie powinna uruchamiać generowania.
+Modele wybudzania są eksperymentalne; skuteczność dla różnych osób nie jest gwarantowana. W wariancie Sol prośba o zaśpiewanie czegoś lub piosenkę wywołuje ElevenLabs Music: losowy temat i styl, nowy polski tekst, wokal i akompaniament, 60 sekund. To oddzielny generator muzyki, bez gwarancji głosu używanego w TTS. Zwykła rozmowa o piosenkach nie powinna uruchamiać generowania. Każdy pełny utwór jest zapisywany jako WAV w Zasobach ElevenLabs (nazwa Lumi + data + unikalny numer), około 1,92 MB na minutę. Przy problemie z wysyłaniem Atom zachowuje jeden oczekujący plik w RAM i blokuje nową generację do zapisu; odcięcie zasilania przed zapisem może go utracić.
 
 ## Eksperyment Sol Ultrafast
 
@@ -68,7 +68,7 @@ Prototyp hostowy toru WAV → polska transkrypcja → Sol 6.1 Ultrafast → obec
 Lumi opisuje [instrukcja eksperymentu](firmware/experiments/sol-ultrafast.md).
 Na tej gałęzi jest też opcjonalny firmware USB `LUMI_SOL_ULTRAFAST`: Realtime
 obsługuje ASR/VAD, Sol generuje odpowiedzi. Domyślny build źródeł bez tej flagi używa standardowego backendu Realtime.
-Gotowa paczka na tej gałęzi zawiera wariant Sol `2.10.1-music`.
+Gotowa paczka na tej gałęzi zawiera wariant Sol `2.11.0-archive`.
 
 ## Pakowanie firmware
 

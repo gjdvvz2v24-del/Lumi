@@ -11,3 +11,6 @@ Klucze OpenAI Realtime i Responses/Sol są osobne, zapisane w NVS.
 Bez Wi-Fi: krótkie lokalne chrapnięcie co 5 sekund.
 Kod źródłowy wymaga -DLUMI_SOL_ULTRAFAST=ON dla tego wariantu.
 Dokumentacja: experiments/sol-ultrafast.md.
+
+Każdy pełny utwór: automatyczny zapis WAV w Zasobach ElevenLabs.
+Ekran gaśnie po 60 s; krótkie naciśnięcie wybudza go na 60 s bez restartu rozmowy.
