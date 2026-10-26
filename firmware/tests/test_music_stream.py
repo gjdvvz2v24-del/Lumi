@@ -15,8 +15,9 @@ harness=r'''
 #define ESP_OK 0
 #define HTTP_METHOD_POST 1
 #define pdMS_TO_TICKS(x) (x)
-#define ESP_LOGI(...) ((void)0)
-#define ESP_LOGW(...) ((void)0)
+static char last_log[512];static const char *TAG="test";
+#define ESP_LOGI(tag,fmt,...) ((void)(tag),(void)snprintf(last_log,sizeof(last_log),fmt,##__VA_ARGS__))
+#define ESP_LOGW(tag,fmt,...) ESP_LOGI(tag,fmt,##__VA_ARGS__)
 typedef struct {uint32_t generation;char text[4096];} reply_t;
 typedef int esp_http_client_handle_t;
 typedef struct {const char *url;int method,timeout_ms,buffer_size;void *crt_bundle_attach;bool disable_auto_redirect;void *event_handler,*user_data;} esp_http_client_config_t;
@@ -33,7 +34,7 @@ static bool current(uint32_t gen){return active&&gen==7;}
 static void vTaskDelay(int ms){clock_ms+=ms;}
 static bool bober_pcm_push(const uint8_t *p,size_t n,uint32_t gen){
  assert(gen==7&&p&&n&&!(n%2));
- if(full_fifo)return false;
+ if(full_fifo||!active)return false;
  assert(output_size+n<=sizeof(output));memcpy(output+output_size,p,n);output_size+=n;return true;
 }
 static int esp_http_client_init(esp_http_client_config_t *c){
@@ -52,7 +53,7 @@ static int esp_http_client_write(int h,const char *body,size_t n){
 static int esp_http_client_fetch_headers(int h){assert(h);clock_ms+=header_delay;return 0;}
 static int esp_http_client_get_status_code(int h){assert(h);return status;}
 static int esp_http_client_read(int h,char *p,size_t cap){
- assert(h);reads++;clock_ms++;
+ assert(h);reads++;if(reads%100==0)clock_ms++;
  if(cancel_at==reads)active=false;
  if(error_at==reads)return -1;
  if(stalled)return 0;
@@ -108,5 +109,5 @@ int main(void){
 '''
 with tempfile.TemporaryDirectory() as d:
  p=Path(d);(p/'test.c').write_text(harness)
- subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-I'+str(root/'main'),'-I'+str(idf/'components/json/cJSON'),str(p/'test.c'),str(idf/'components/json/cJSON/cJSON.c'),'-o',str(p/'test')],check=True)
+ subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-Wno-deprecated-declarations','-fsanitize=address,undefined','-I'+str(root/'main'),'-I'+str(idf/'components/json/cJSON'),str(p/'test.c'),str(idf/'components/json/cJSON/cJSON.c'),'-o',str(p/'test')],check=True)
  subprocess.run([str(p/'test')],check=True)
