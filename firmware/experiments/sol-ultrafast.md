@@ -380,3 +380,17 @@ is still accepted. There is no API call or extra audio task. Regenerate with
 a local listenable preview. Native tests execute the real scheduler and speaker
 with Wi-Fi/session transitions, verify full clips five seconds apart, immediate
 reconnect cancellation, audio priority, timer wrap, power and self-wake masking.
+
+
+Offline-snore app source `e377c13` was flashed over USB on 2026-10-26. App hash
+was verified; partition table/NVS/PHY bytes and promptfs were compared before and
+after the app-only update and matched, preserving the permanent Sol credential
+and all three Wi-Fi profiles. Physical startup obtained IP at 4821 ms, with no
+snore on the healthy connection. Offline cadence/audio and self-wake suppression
+were tested natively; a physical router outage was not induced.
+
+A subsequent prompt-only USB update added the user's exact reply to questions
+about the AI model: „model kupa dupa sraka by Tatuś”. The axolotl identity and
+Grzegorz creator answer remain. The guarded updater verified the partition table
+and prompt image hash; it did not rewrite the application or NVS. The generated
+fallback header in Git also contains the updated prompt for subsequent builds.

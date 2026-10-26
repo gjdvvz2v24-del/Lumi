@@ -54,6 +54,8 @@ Sam prompt można wgrać przez `python3 update_prompt_usb.py PORT_USB`. Aktualiz
 
 ## Zachowanie
 
+Bez połączenia Wi-Fi Atom odtwarza lokalne, krótkie chrapnięcie co 5 sekund. Po połączeniu z siecią dźwięk ustaje.
+
 Po starcie Lumi czeka na hasło „Hej Lumi”, „Luuu-miiii” lub mocne potrząśnięcie. Po zakończeniu rozmowy wraca do oczekiwania. Potrząsanie nie odtwarza efektów dźwiękowych. Krótki przycisk wraca do oczekiwania, długie przytrzymanie usypia urządzenie.
 
 Aktualny prompt wymaga krótkiej, prostej rozmowy bez nieproszonych porad, komentarzy do emocji, schlebiania i uzasadniania własnych reakcji. Użytkownik potwierdził poprawę stylu 24.10.2026.
