@@ -509,3 +509,15 @@ Boot reported the new version, Wi-Fi ready and no panic. The prior physical
 60-second Assets upload/download and display wake acceptance remain the evidence
 for the unchanged archive/display code; the expanded topics were tested without
 additional paid song generations.
+
+## Songs requested in context (2.12.0-requested, prepared)
+
+Removed the random topic/setting/story generator. Sol now calls `play_song` with
+`prompt` (self-contained brief from Zosia's request and relevant conversation,
+max 1600 UTF-8 bytes) and `style` (only explicitly requested genre/mood, max 256
+bytes; empty if unspecified). It resolves references such as "about that" from
+Responses history, asks one short question if the topic cannot be inferred, and
+never sends unrelated conversation. The firmware passes that brief to Music.
+An unspecified style is selected locally from 16 cheerful genres. Explicit
+style/mood overrides that fallback. Duration, cached announcement, WAV Assets
+archive and display timeout remain unchanged. No new paid model call is added.

@@ -98,16 +98,19 @@ int main(void){
  assert(!sol_generate(&queued));
  fake_response="{\"id\":\"bye\",\"status\":\"completed\",\"service_tier\":\"ultrafast\",\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":\"Duplicate\"}]},{\"type\":\"function_call\",\"name\":\"end_conversation\",\"arguments\":\"{\\\"farewell\\\":\\\"Pa!\\\"}\"}]}";
  assert(sol_generate(&queued));assert(!strcmp(queued.text,"Pa!")&&atomic_load(&end_after_reply));
- fake_response="{\"id\":\"song\",\"status\":\"completed\",\"service_tier\":\"ultrafast\",\"output\":[{\"type\":\"function_call\",\"name\":\"play_random_song\",\"call_id\":\"song_call_1\",\"arguments\":\"{}\"}]}";
+ fake_response="{\"id\":\"song\",\"status\":\"completed\",\"service_tier\":\"ultrafast\",\"output\":[{\"type\":\"function_call\",\"name\":\"play_song\",\"call_id\":\"song_call_1\",\"arguments\":\"{\\\"prompt\\\":\\\"Piosenka o Zosi i jej czerwonym rowerze\\\",\\\"style\\\":\\\"rock\\\"}\"}]}";
  assert(sol_generate(&queued));assert(sol_music_requested&&!strcmp(sol_music_pending_id,"song_call_1"));
+ assert(strstr(queued.text,"czerwonym rowerze")&&strstr(queued.text,"rock"));
+ cJSON *music=lumi_music_payload(queued.text,0);assert(music);
+ assert(strstr(str(music,"prompt"),"czerwonym rowerze")&&strstr(str(music,"prompt"),"Musical style: rock"));cJSON_Delete(music);
  sol_music_succeeded=true;strcpy(queued.text,"Dzięki!");
  fake_response="{\"id\":\"after_song\",\"status\":\"completed\",\"service_tier\":\"ultrafast\",\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":\"Proszę!\"}]}]}";
  assert(sol_generate(&queued));assert(!sol_music_requested&&!sol_music_pending_id[0]);
  assert(strstr(request_body,"function_call_output")&&strstr(request_body,"song_call_1")&&strstr(request_body,"Dzięki!"));
 
- fake_response="{\"id\":\"bad_song\",\"status\":\"completed\",\"service_tier\":\"ultrafast\",\"output\":[{\"type\":\"function_call\",\"name\":\"play_random_song\",\"call_id\":\"x\",\"arguments\":\"{\\\"unexpected\\\":true}\"}]}";
+ fake_response="{\"id\":\"bad_song\",\"status\":\"completed\",\"service_tier\":\"ultrafast\",\"output\":[{\"type\":\"function_call\",\"name\":\"play_song\",\"call_id\":\"x\",\"arguments\":\"{\\\"unexpected\\\":true}\"}]}";
  assert(!sol_generate(&queued)&&!sol_music_requested&&!strcmp(sol_previous,"after_song"));
- fake_response="{\"id\":\"song2\",\"status\":\"completed\",\"service_tier\":\"ultrafast\",\"output\":[{\"type\":\"function_call\",\"name\":\"play_random_song\",\"call_id\":\"song_call_2\",\"arguments\":\"{}\"}]}";
+ fake_response="{\"id\":\"song2\",\"status\":\"completed\",\"service_tier\":\"ultrafast\",\"output\":[{\"type\":\"function_call\",\"name\":\"play_song\",\"call_id\":\"song_call_2\",\"arguments\":\"{\\\"prompt\\\":\\\"Piosenka o Zosi i jej czerwonym rowerze\\\",\\\"style\\\":\\\"rock\\\"}\"}]}";
  assert(sol_generate(&queued)&&sol_music_requested);sol_music_succeeded=false;
  fake_status=503;assert(!sol_generate(&queued));assert(!strcmp(sol_music_pending_id,"song_call_2"));
  assert(strstr(request_body,"playback failed")&&strstr(request_body,"function_call_output"));

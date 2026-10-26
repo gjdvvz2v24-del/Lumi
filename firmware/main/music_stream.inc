@@ -15,11 +15,11 @@ static bool queue_music_wait(uint32_t generation){
 /* Eleven Music PCM is signed 16-bit little-endian STEREO at the requested
    16 kHz (verified against a real 30 s response). TTS is mono. Downmix whole
    stereo frames, retaining up to three bytes between arbitrary HTTP chunks. */
-static bool play_random_song(const reply_t *r){
+static bool play_song(const reply_t *r){
  bool ok=false,bad=false;size_t received=0,carry=0;int status=0;
  int64_t start=bober_now_ms(),deadline=start+180000,last_progress=start,last_play=g_last_play_ms;
  const char *stage="open";
- cJSON *j=lumi_music_payload(esp_random());if(!j)return false;
+ cJSON *j=lumi_music_payload(r->text,esp_random());if(!j)return false;
  char *body=cJSON_PrintUnformatted(j);cJSON_Delete(j);if(!body)return false;
  esp_http_client_config_t cfg={.url="https://api.elevenlabs.io/v1/music?output_format=pcm_16000",
   .method=HTTP_METHOD_POST,.timeout_ms=120000,.buffer_size=2048,

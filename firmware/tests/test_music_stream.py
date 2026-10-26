@@ -86,16 +86,16 @@ static void reset(void){
  }
 }
 int main(void){
- reply_t r={.generation=7};
+ reply_t r={.generation=7,.text="{\"prompt\":\"Piosenka o Zosi i jej czerwonym rowerze\",\"style\":\"\"}"};
  for(unsigned pick=0;pick<64;pick++){
-  cJSON *j=lumi_music_payload(pick);assert(j);
+  cJSON *j=lumi_music_payload(r.text,pick);assert(j);
   const char *prompt=cJSON_GetObjectItem(j,"prompt")->valuestring;
   assert(strstr(prompt,"Polish")&&strstr(prompt,"vocals"));cJSON_Delete(j);
  }
  cJSON *tool=lumi_music_tool();assert(tool&&cJSON_IsTrue(cJSON_GetObjectItem(tool,"strict")));cJSON_Delete(tool);
  const size_t chunks[]={2048,2047,511,3};
  for(size_t c=0;c<sizeof(chunks)/sizeof(*chunks);c++){
-  reset();chunk=chunks[c];assert(play_random_song(&r));
+  reset();chunk=chunks[c];assert(play_song(&r));
   assert(output_size==LUMI_MUSIC_BYTES+320&&g_response_complete&&opens==1&&closes==1);
   assert(archive_calls==1&&archived_bytes==LUMI_MUSIC_BYTES&&!memcmp(archived,output+320,LUMI_MUSIC_BYTES));
   for(size_t i=0;i<LUMI_MUSIC_BYTES/2;i++){
@@ -103,17 +103,17 @@ int main(void){
    assert(got==(i%2?20000:-20000));
   }
  }
- reset();begin_ok=false;assert(!play_random_song(&r)&&!opens&&!output_size);
- reset();status=401;assert(!play_random_song(&r)&&opens==1&&output_size==320&&!g_response_complete);
- reset();status=403;assert(!play_random_song(&r)&&opens==1&&output_size==320);
- reset();input_size--;assert(!play_random_song(&r)&&!g_response_complete);
- reset();input_size+=4;assert(!play_random_song(&r)&&!g_response_complete);
- reset();cancel_at=2;assert(!play_random_song(&r)&&!g_response_complete);
- reset();error_at=2;assert(!play_random_song(&r)&&opens==1);
- reset();g_ws_reconnect=true;assert(!play_random_song(&r)&&!opens);
- reset();stalled=true;assert(!play_random_song(&r)&&clock_ms<32000);
- reset();full_fifo=true;assert(!play_random_song(&r)&&!opens&&clock_ms<12000);
- reset();header_delay=180001;assert(!play_random_song(&r)&&output_size==320);
+ reset();begin_ok=false;assert(!play_song(&r)&&!opens&&!output_size);
+ reset();status=401;assert(!play_song(&r)&&opens==1&&output_size==320&&!g_response_complete);
+ reset();status=403;assert(!play_song(&r)&&opens==1&&output_size==320);
+ reset();input_size--;assert(!play_song(&r)&&!g_response_complete);
+ reset();input_size+=4;assert(!play_song(&r)&&!g_response_complete);
+ reset();cancel_at=2;assert(!play_song(&r)&&!g_response_complete);
+ reset();error_at=2;assert(!play_song(&r)&&opens==1);
+ reset();g_ws_reconnect=true;assert(!play_song(&r)&&!opens);
+ reset();stalled=true;assert(!play_song(&r)&&clock_ms<32000);
+ reset();full_fifo=true;assert(!play_song(&r)&&!opens&&clock_ms<12000);
+ reset();header_delay=180001;assert(!play_song(&r)&&output_size==320);
  puts("PASS: real Music producer, 60 s stereo downmix, split frames, duration, one-shot HTTP errors, cancellation, stall/deadline");
 }
 '''

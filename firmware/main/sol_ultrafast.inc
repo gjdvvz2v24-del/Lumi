@@ -63,7 +63,7 @@ static void sol_submit(const char *text){
 }
 
 static bool sol_generate(reply_t *r){
- bool ok=false;char *body=NULL,*data=NULL;cJSON *root=NULL;
+ bool ok=false;char *body=NULL,*data=NULL,*music_args=NULL;cJSON *root=NULL;
  sol_music_requested=false;
  if(!current(r->generation)||!sol_template||!g_cfg.sol_key[0])return false;
  cJSON *req=cJSON_Duplicate(sol_template,true);
@@ -75,7 +75,7 @@ static bool sol_generate(reply_t *r){
   cJSON_AddItemToArray(input,result);cJSON_AddItemToArray(input,user);
   if(!cJSON_AddStringToObject(result,"type","function_call_output")||
      !cJSON_AddStringToObject(result,"call_id",sol_music_pending_id)||
-     !cJSON_AddStringToObject(result,"output",sol_music_succeeded?"Played a newly generated random 60-second Polish song.":"Music generation or playback failed. No automatic retry was made.")||
+     !cJSON_AddStringToObject(result,"output",sol_music_succeeded?"Played a newly generated 60-second song following the requested topic and musical instructions.":"Music generation or playback failed. No automatic retry was made.")||
      !cJSON_AddStringToObject(user,"role","user")||!cJSON_AddStringToObject(user,"content",r->text))goto payload_done;
  }else if(!cJSON_AddStringToObject(req,"input",r->text))goto payload_done;
  if(sol_previous[0]&&!cJSON_AddStringToObject(req,"previous_response_id",sol_previous))goto payload_done;
@@ -134,10 +134,11 @@ static bool sol_generate(reply_t *r){
   if(!strcmp(type,"reasoning"))continue;
   if(!strcmp(type,"function_call")){
    if(ending||music)goto done;
-   if(!strcmp(str(item,"name"),"play_random_song")){
+   if(!strcmp(str(item,"name"),"play_song")){
     const char *call=str(item,"call_id");size_t n=strlen(call);
     cJSON *args=cJSON_Parse(str(item,"arguments"));
-    bool valid=n>0&&n<sizeof(music_call)&&cJSON_IsObject(args)&&cJSON_GetArraySize(args)==0;
+    bool valid=n>0&&n<sizeof(music_call)&&lumi_music_request_valid(args);
+    if(valid){music_args=cJSON_PrintUnformatted(args);valid=music_args&&strlen(music_args)<sizeof(r->text);}
     cJSON_Delete(args);if(!valid)goto done;
     memcpy(music_call,call,n+1);music=true;continue;
    }
@@ -159,6 +160,7 @@ static bool sol_generate(reply_t *r){
   }
  }
  if(ending)strlcpy(r->text,farewell,sizeof(r->text));
+ if(music)strlcpy(r->text,music_args,sizeof(r->text));
  if((!r->text[0]&&!music)||!current(r->generation))goto done;
  strlcpy(sol_previous,id,sizeof(sol_previous));
  strlcpy(sol_music_pending_id,music_call,sizeof(sol_music_pending_id));
@@ -168,5 +170,5 @@ static bool sol_generate(reply_t *r){
  sol_http_used_ms=bober_now_ms();
  ESP_LOGI(TAG,"Sol completed: tier=ultrafast elapsed_ms=%lld reused_client=%d end=%d",(long long)(bober_now_ms()-start),reused,ending);
  ok=true;
- done:cJSON_Delete(root);free(data);free(body);if(!ok)sol_http_drop();return ok;
+ done:cJSON_Delete(root);free(data);free(body);free(music_args);if(!ok)sol_http_drop();return ok;
 }

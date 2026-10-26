@@ -349,7 +349,7 @@ void bober_eleven_task(void *arg){
      strlcpy(r->text,"Nie udało mi się pobrać odpowiedzi. Spróbuj jeszcze raz.",sizeof(r->text));
     }
     if(sol_music_requested){
-     sol_music_succeeded=play_random_song(r);
+     sol_music_succeeded=play_song(r);
      if(!current(gen)||g_ws_reconnect)break;
      if(sol_music_succeeded)continue;
      bober_pcm_reset();

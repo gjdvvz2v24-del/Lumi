@@ -60,7 +60,7 @@ Po starcie Lumi czeka na hasło „Hej Lumi”, „Luuu-miiii” lub mocne potrz
 
 Aktualny prompt wymaga krótkiej, prostej rozmowy bez nieproszonych porad, komentarzy do emocji, schlebiania i uzasadniania własnych reakcji. Użytkownik potwierdził poprawę stylu 24.10.2026.
 
-Modele wybudzania są eksperymentalne; skuteczność dla różnych osób nie jest gwarantowana. W wariancie Sol prośba o zaśpiewanie czegoś lub piosenkę wywołuje ElevenLabs Music: losowy temat i styl, nowy polski tekst, wokal i akompaniament, 60 sekund. To oddzielny generator muzyki, bez gwarancji głosu używanego w TTS. Zwykła rozmowa o piosenkach nie powinna uruchamiać generowania. Każdy pełny utwór jest zapisywany jako WAV w Zasobach ElevenLabs (nazwa Lumi + data + unikalny numer), około 1,92 MB na minutę. Przy problemie z wysyłaniem Atom zachowuje jeden oczekujący plik w RAM i blokuje nową generację do zapisu; odcięcie zasilania przed zapisem może go utracić.
+Modele wybudzania są eksperymentalne; skuteczność dla różnych osób nie jest gwarantowana. W wariancie Sol prośba o zaśpiewanie czegoś lub piosenkę wywołuje ElevenLabs Music: temat i szczegóły z polecenia oraz kontekstu rozmowy, losowy wesoły styl (chyba że Zosia poda konkretny), nowy polski tekst, wokal i akompaniament, 60 sekund. To oddzielny generator muzyki, bez gwarancji głosu używanego w TTS. Zwykła rozmowa o piosenkach nie powinna uruchamiać generowania. Każdy pełny utwór jest zapisywany jako WAV w Zasobach ElevenLabs (nazwa Lumi + data + unikalny numer), około 1,92 MB na minutę. Przy problemie z wysyłaniem Atom zachowuje jeden oczekujący plik w RAM i blokuje nową generację do zapisu; odcięcie zasilania przed zapisem może go utracić.
 
 ## Eksperyment Sol Ultrafast
 
@@ -68,7 +68,7 @@ Prototyp hostowy toru WAV → polska transkrypcja → Sol 6.1 Ultrafast → obec
 Lumi opisuje [instrukcja eksperymentu](firmware/experiments/sol-ultrafast.md).
 Na tej gałęzi jest też opcjonalny firmware USB `LUMI_SOL_ULTRAFAST`: Realtime
 obsługuje ASR/VAD, Sol generuje odpowiedzi. Domyślny build źródeł bez tej flagi używa standardowego backendu Realtime.
-Gotowa paczka na tej gałęzi zawiera wariant Sol `2.11.1-diverse`.
+Gotowa paczka na tej gałęzi zawiera wariant Sol `2.12.0-requested`.
 
 ## Pakowanie firmware
 
