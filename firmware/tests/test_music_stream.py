@@ -27,7 +27,7 @@ static bool active,g_ws_reconnect,g_response_complete,full_fifo,stalled;
 static int64_t clock_ms,g_last_play_ms,g_last_pcm_ms,sol_last_activity_ms;
 static size_t input_size,read_bytes,output_size,chunk;
 static int opens,closes,status,cancel_at,error_at,reads,header_delay;
-static uint8_t output[LUMI_MUSIC_BYTES],input[LUMI_MUSIC_BYTES*2+4];
+static uint8_t output[LUMI_MUSIC_BYTES+320],input[LUMI_MUSIC_BYTES*2+4];
 static uint32_t esp_random(void){return 42;}
 static int64_t bober_now_ms(void){return clock_ms;}
 static bool current(uint32_t gen){return active&&gen==7;}
@@ -63,6 +63,7 @@ static int esp_http_client_read(int h,char *p,size_t cap){
 static bool esp_http_client_is_complete_data_received(int h){assert(h);return read_bytes==input_size&&!stalled;}
 static void esp_http_client_close(int h){assert(h);closes++;}
 static void esp_http_client_cleanup(int h){assert(h);}
+__asm__(".pushsection __TEXT,__const\n.globl _binary_music_wait_pcm_start\n_binary_music_wait_pcm_start:\n.space 320\n.globl _binary_music_wait_pcm_end\n_binary_music_wait_pcm_end:\n.popsection");
 #include "music_stream.inc"
 static void reset(void){
  active=true;g_ws_reconnect=g_response_complete=full_fifo=stalled=false;
@@ -88,22 +89,22 @@ int main(void){
  const size_t chunks[]={2048,2047,511,3};
  for(size_t c=0;c<sizeof(chunks)/sizeof(*chunks);c++){
   reset();chunk=chunks[c];assert(play_random_song(&r));
-  assert(output_size==960000&&g_response_complete&&opens==1&&closes==1);
-  for(size_t i=0;i<output_size/2;i++){
-   int16_t got=(int16_t)((uint16_t)output[2*i]|((uint16_t)output[2*i+1]<<8));
+  assert(output_size==960320&&g_response_complete&&opens==1&&closes==1);
+  for(size_t i=0;i<LUMI_MUSIC_BYTES/2;i++){
+   int16_t got=(int16_t)((uint16_t)output[320+2*i]|((uint16_t)output[321+2*i]<<8));
    assert(got==(i%2?20000:-20000));
   }
  }
- reset();status=401;assert(!play_random_song(&r)&&opens==1&&!output_size&&!g_response_complete);
- reset();status=403;assert(!play_random_song(&r)&&opens==1&&!output_size);
+ reset();status=401;assert(!play_random_song(&r)&&opens==1&&output_size==320&&!g_response_complete);
+ reset();status=403;assert(!play_random_song(&r)&&opens==1&&output_size==320);
  reset();input_size--;assert(!play_random_song(&r)&&!g_response_complete);
  reset();input_size+=4;assert(!play_random_song(&r)&&!g_response_complete);
  reset();cancel_at=2;assert(!play_random_song(&r)&&!g_response_complete);
  reset();error_at=2;assert(!play_random_song(&r)&&opens==1);
  reset();g_ws_reconnect=true;assert(!play_random_song(&r)&&!opens);
  reset();stalled=true;assert(!play_random_song(&r)&&clock_ms<32000);
- reset();full_fifo=true;assert(!play_random_song(&r)&&clock_ms<32000);
- reset();header_delay=180001;assert(!play_random_song(&r)&&!output_size);
+ reset();full_fifo=true;assert(!play_random_song(&r)&&!opens&&clock_ms<12000);
+ reset();header_delay=180001;assert(!play_random_song(&r)&&output_size==320);
  puts("PASS: real Music producer, 30 s stereo downmix, split frames, duration, one-shot HTTP errors, cancellation, stall/deadline");
 }
 '''

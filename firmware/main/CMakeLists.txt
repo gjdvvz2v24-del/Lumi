@@ -7,6 +7,7 @@ option(BOBER_OPENAI_DIAGNOSTICS "Log conversation transcripts and responses on U
 option(LUMI_SOL_ULTRAFAST "Experimental Sol responses with Realtime ASR/VAD" OFF)
 if(LUMI_SOL_ULTRAFAST)
   target_compile_definitions(${COMPONENT_LIB} PRIVATE LUMI_SOL_ULTRAFAST=1)
+  target_add_binary_data(${COMPONENT_LIB} "assets/music_wait.pcm" BINARY)
   foreach(i RANGE 0 5)
     target_add_binary_data(${COMPONENT_LIB} "assets/fillers/filler_${i}.pcm" BINARY)
   endforeach()

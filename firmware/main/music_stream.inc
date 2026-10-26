@@ -1,3 +1,17 @@
+/* Cached acknowledgement is queued before the Music HTTP request. It plays
+   while generation is pending, with no per-song TTS request or mic reopening. */
+extern const uint8_t music_wait_start[] __asm__("_binary_music_wait_pcm_start");
+extern const uint8_t music_wait_end[] __asm__("_binary_music_wait_pcm_end");
+static bool queue_music_wait(uint32_t generation){
+ const uint8_t *p=music_wait_start;int64_t start=bober_now_ms();
+ while(p<music_wait_end){
+  if(!current(generation)||g_ws_reconnect||bober_now_ms()-start>10000)return false;
+  size_t n=(size_t)(music_wait_end-p);if(n>2048)n=2048;
+  if(bober_pcm_push(p,n,generation)){p+=n;g_last_pcm_ms=bober_now_ms();}
+  else vTaskDelay(pdMS_TO_TICKS(10));
+ }
+ return true;
+}
 /* Eleven Music PCM is signed 16-bit little-endian STEREO at the requested
    16 kHz (verified against a real 30 s response). TTS is mono. Downmix whole
    stereo frames, retaining up to three bytes between arbitrary HTTP chunks. */
@@ -16,7 +30,8 @@ static bool play_random_song(const reply_t *r){
  esp_http_client_set_header(h,"Content-Type","application/json");esp_http_client_set_header(h,"Accept","audio/pcm");
  ESP_LOGI(TAG,"Music requested: model=music_v2 duration_ms=30000");
  if(!current(r->generation)||g_ws_reconnect)goto done;
- if(esp_http_client_open(h,strlen(body))!=ESP_OK)goto done;
+ stage="announcement";if(!queue_music_wait(r->generation))goto done;
+ stage="open";if(esp_http_client_open(h,strlen(body))!=ESP_OK)goto done;
  stage="write";
  for(size_t sent=0;sent<strlen(body);){
   if(!current(r->generation)||g_ws_reconnect||bober_now_ms()>deadline)goto done;
