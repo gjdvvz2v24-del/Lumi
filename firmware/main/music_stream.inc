@@ -28,7 +28,7 @@ static bool play_random_song(const reply_t *r){
  uint8_t stereo[2048],mono[1024];
  esp_http_client_set_header(h,"xi-api-key",g_cfg.api_key);
  esp_http_client_set_header(h,"Content-Type","application/json");esp_http_client_set_header(h,"Accept","audio/pcm");
- ESP_LOGI(TAG,"Music requested: model=music_v2 duration_ms=30000");
+ ESP_LOGI(TAG,"Music requested: model=music_v2 duration_ms=%u",LUMI_MUSIC_MS);
  if(!current(r->generation)||g_ws_reconnect)goto done;
  stage="announcement";if(!queue_music_wait(r->generation))goto done;
  stage="open";if(esp_http_client_open(h,strlen(body))!=ESP_OK)goto done;
@@ -54,7 +54,7 @@ static bool play_random_song(const reply_t *r){
    vTaskDelay(pdMS_TO_TICKS(10));continue;
   }
   received+=(size_t)n;last_progress=bober_now_ms();
-  if(received>LUMI_MUSIC_BYTES*2u){stage="audio_limit_30s";goto done;}
+  if(received>LUMI_MUSIC_BYTES*2u){stage="audio_limit_60s";goto done;}
   if(received==(size_t)n)ESP_LOGI(TAG,"Music first PCM: elapsed_ms=%lld",(long long)(bober_now_ms()-start));
   size_t total=carry+(size_t)n,frames=total/4;
   for(size_t i=0;i<frames;i++){
@@ -75,7 +75,7 @@ static bool play_random_song(const reply_t *r){
  free(body);esp_http_client_close(h);esp_http_client_cleanup(h);
  if(ok&&current(r->generation)&&!g_ws_reconnect){
   g_response_complete=true;sol_last_activity_ms=bober_now_ms();
-  ESP_LOGI(TAG,"Music complete: audio_ms=30000 elapsed_ms=%lld",(long long)(bober_now_ms()-start));return true;
+  ESP_LOGI(TAG,"Music complete: audio_ms=%u elapsed_ms=%lld",LUMI_MUSIC_MS,(long long)(bober_now_ms()-start));return true;
  }
  ESP_LOGW(TAG,"Music interrupted: stage=%s status=%d received_bytes=%u elapsed_ms=%lld",stage,status,(unsigned)received,(long long)(bober_now_ms()-start));
  return false; /* Never retry a possibly billed generation automatically. */

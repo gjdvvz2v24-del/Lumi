@@ -75,7 +75,7 @@ static bool sol_generate(reply_t *r){
   cJSON_AddItemToArray(input,result);cJSON_AddItemToArray(input,user);
   if(!cJSON_AddStringToObject(result,"type","function_call_output")||
      !cJSON_AddStringToObject(result,"call_id",sol_music_pending_id)||
-     !cJSON_AddStringToObject(result,"output",sol_music_succeeded?"Played a newly generated random 30-second Polish song.":"Music generation or playback failed. No automatic retry was made.")||
+     !cJSON_AddStringToObject(result,"output",sol_music_succeeded?"Played a newly generated random 60-second Polish song.":"Music generation or playback failed. No automatic retry was made.")||
      !cJSON_AddStringToObject(user,"role","user")||!cJSON_AddStringToObject(user,"content",r->text))goto payload_done;
  }else if(!cJSON_AddStringToObject(req,"input",r->text))goto payload_done;
  if(sol_previous[0]&&!cJSON_AddStringToObject(req,"previous_response_id",sol_previous))goto payload_done;

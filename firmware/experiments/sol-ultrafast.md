@@ -431,3 +431,12 @@ Before each Music request Lumi now queues the cached 1,920 ms announcement
 request is pending. Only the initial asset generation uses TTS; repeated playback
 has no API cost. The microphone remains gated through both announcement and song.
 `tools/generate_music_wait.py` recreates the asset only when absent.
+
+### 60-second update with cached announcement (2.10.1-music)
+
+On user request, current song duration is 60 seconds (`LUMI_MUSIC_MS=60000`).
+The earlier 30-second measurements above are historical validation, not timings
+for 60-second generation. Prompt, tool description, Responses history output,
+PCM limit and native duration checks all use the longer song. The announcement
+still plays locally before the HTTP request. No 60-second paid host test is run;
+the real streaming path is verified natively at the full new length.

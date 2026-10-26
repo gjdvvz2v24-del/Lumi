@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run real Music producer: stereo frames, 30 s, partial chunks, failures, history-independent cancellation."""
+"""Run real Music producer: stereo frames, 60 s, partial chunks, failures, history-independent cancellation."""
 from pathlib import Path
 import os, subprocess, tempfile
 root=Path(__file__).resolve().parents[1]
@@ -46,7 +46,7 @@ static int esp_http_client_open(int h,size_t n){assert(h&&n);opens++;return 0;}
 static int esp_http_client_write(int h,const char *body,size_t n){
  assert(h&&n);cJSON *j=cJSON_ParseWithLength(body,n);assert(j);
  assert(!strcmp(cJSON_GetObjectItem(j,"model_id")->valuestring,"music_v2"));
- assert(cJSON_GetObjectItem(j,"music_length_ms")->valueint==30000);
+ assert(cJSON_GetObjectItem(j,"music_length_ms")->valueint==60000);
  assert(cJSON_IsFalse(cJSON_GetObjectItem(j,"force_instrumental")));
  cJSON_Delete(j);return (int)n;
 }
@@ -89,7 +89,7 @@ int main(void){
  const size_t chunks[]={2048,2047,511,3};
  for(size_t c=0;c<sizeof(chunks)/sizeof(*chunks);c++){
   reset();chunk=chunks[c];assert(play_random_song(&r));
-  assert(output_size==960320&&g_response_complete&&opens==1&&closes==1);
+  assert(output_size==LUMI_MUSIC_BYTES+320&&g_response_complete&&opens==1&&closes==1);
   for(size_t i=0;i<LUMI_MUSIC_BYTES/2;i++){
    int16_t got=(int16_t)((uint16_t)output[320+2*i]|((uint16_t)output[321+2*i]<<8));
    assert(got==(i%2?20000:-20000));
@@ -105,7 +105,7 @@ int main(void){
  reset();stalled=true;assert(!play_random_song(&r)&&clock_ms<32000);
  reset();full_fifo=true;assert(!play_random_song(&r)&&!opens&&clock_ms<12000);
  reset();header_delay=180001;assert(!play_random_song(&r)&&output_size==320);
- puts("PASS: real Music producer, 30 s stereo downmix, split frames, duration, one-shot HTTP errors, cancellation, stall/deadline");
+ puts("PASS: real Music producer, 60 s stereo downmix, split frames, duration, one-shot HTTP errors, cancellation, stall/deadline");
 }
 '''
 with tempfile.TemporaryDirectory() as d:
