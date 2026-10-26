@@ -440,3 +440,24 @@ for 60-second generation. Prompt, tool description, Responses history output,
 PCM limit and native duration checks all use the longer song. The announcement
 still plays locally before the HTTP request. No 60-second paid host test is run;
 the real streaming path is verified natively at the full new length.
+
+Deployment of 2.10.1-music (60 s plus announcement): full build and native
+60-second producer/history tests passed. Flashed app-only at 0x10000; protected
+partitions and promptfs compared byte-identical before/after. App SHA-256:
+`13aff71e4b54728d733ae205a521739afabb2388a9241b0a3d540039d6137d4d`.
+Boot confirmed version, Wi-Fi ready and no panic. The earlier physical/audible
+song acceptance was for 30 s; 60 s has not yet had listening confirmation.
+
+### Music console saving limitation
+
+User requested every API song in Music > Saved. Not implemented: both Music >
+Generations and Saved are empty for these API outputs, and the connected plugin
+has no save/favorite operation for Music API songs. A separate 3 s probe with
+`store_for_inpainting=true` returned HTTP 200 and a song-id, but still appeared
+in neither console tab after refresh. That option stores audio for editing;
+it is not evidence of adding a track to Saved. Do not describe it as an archive.
+Official `/v1/history` docs explicitly exclude Music/SFX generation retrieval:
+https://elevenlabs.io/docs/api-reference/history/list .
+The Music upload endpoint is also for editing and charges the same as generation;
+no upload or repeated full-length generation was used as a saving workaround.
+The current firmware streams and plays songs; it does not retain song files.
