@@ -423,6 +423,11 @@ partitions (`0x8000..0xffff`, including NVS/keys/Wi-Fi) and promptfs. Boot repor
 the new version, Wi-Fi IP ready at 4.9 s, and no panic. Host Music generation and
 30 s PCM format are verified. A spoken request on the physical Atom invoked
 Music: first PCM after 6,531 ms, complete 30 s audio downloaded after 14,965 ms.
-The speaker FIFO drained and microphone cue/listening resumed afterwards. Audible
-quality still requires user confirmation. Tests do not automatically retry or
+The speaker FIFO drained and microphone cue/listening resumed afterwards. The user confirmed the song sounds good. Tests do not automatically retry or
 generate additional songs.
+
+Before each Music request Lumi now queues the cached 1,920 ms announcement
+“Dobra, daj mi chwilę.” in her configured TTS voice. It plays while the Music HTTP
+request is pending. Only the initial asset generation uses TTS; repeated playback
+has no API cost. The microphone remains gated through both announcement and song.
+`tools/generate_music_wait.py` recreates the asset only when absent.
