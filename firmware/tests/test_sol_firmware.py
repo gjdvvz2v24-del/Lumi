@@ -17,6 +17,7 @@ HARNESS = r'''
 #include <stdatomic.h>
 #include "cJSON.h"
 #include "openai_profile.h"
+#include "music_protocol.h"
 typedef struct {uint32_t generation;char text[4096];} reply_t;
 typedef int QueueHandle_t;
 typedef int esp_http_client_handle_t;
@@ -97,7 +98,13 @@ int main(void){
  assert(!sol_generate(&queued));
  fake_response="{\"id\":\"bye\",\"status\":\"completed\",\"service_tier\":\"ultrafast\",\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":\"Duplicate\"}]},{\"type\":\"function_call\",\"name\":\"end_conversation\",\"arguments\":\"{\\\"farewell\\\":\\\"Pa!\\\"}\"}]}";
  assert(sol_generate(&queued));assert(!strcmp(queued.text,"Pa!")&&atomic_load(&end_after_reply));
- cancel_on_read=true;assert(!sol_generate(&queued));assert(!strcmp(sol_previous,"bye"));
+ fake_response="{\"id\":\"song\",\"status\":\"completed\",\"service_tier\":\"ultrafast\",\"output\":[{\"type\":\"function_call\",\"name\":\"play_random_song\",\"call_id\":\"song_call_1\",\"arguments\":\"{}\"}]}";
+ assert(sol_generate(&queued));assert(sol_music_requested&&!strcmp(sol_music_pending_id,"song_call_1"));
+ sol_music_succeeded=true;strcpy(queued.text,"Dzięki!");
+ fake_response="{\"id\":\"after_song\",\"status\":\"completed\",\"service_tier\":\"ultrafast\",\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":\"Proszę!\"}]}]}";
+ assert(sol_generate(&queued));assert(!sol_music_requested&&!sol_music_pending_id[0]);
+ assert(strstr(request_body,"function_call_output")&&strstr(request_body,"song_call_1")&&strstr(request_body,"Dzięki!"));
+ cancel_on_read=true;assert(!sol_generate(&queued));assert(!strcmp(sol_previous,"after_song"));
  active=true;cancel_on_read=false;fake_status=403;assert(!sol_generate(&queued));
  assert(!sol_http);
  cJSON_Delete(sol_template);puts("PASS: actual C backend config, queue gate, text, history, incomplete/tier/error rejection, farewell, cancellation");

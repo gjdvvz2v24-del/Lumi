@@ -7,6 +7,8 @@
 #include "tts_delivery.h"
 #include "playback_gate.h"
 #include "tts_limits.h"
+#include "music_protocol.h"
+#include "esp_random.h"
 #include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -268,6 +270,7 @@ static bool speak(const reply_t *r){
 }
 #ifdef LUMI_SOL_ULTRAFAST
 #include "sol_fillers.inc"
+#include "music_stream.inc"
 #endif
 static bool wait_clock(void){
  for(unsigned i=0;i<26&&g_wifi_ready&&!bober_power_requested();i++){
@@ -337,6 +340,13 @@ void bober_eleven_task(void *arg){
      if(!current(gen))break;
      ESP_LOGE(TAG,"Sol request failed; no automatic retry or backend fallback");
      strlcpy(r->text,"Nie udało mi się pobrać odpowiedzi. Spróbuj jeszcze raz.",sizeof(r->text));
+    }
+    if(sol_music_requested){
+     sol_music_succeeded=play_random_song(r);
+     if(!current(gen)||g_ws_reconnect)break;
+     if(sol_music_succeeded)continue;
+     bober_pcm_reset();
+     strlcpy(r->text,"Nie udało mi się wygenerować piosenki. Spróbuj później.",sizeof(r->text));
     }
     if(!current(gen)||!speak(r)){ESP_LOGW(TAG,"Reconnect: Sol TTS failed or session cancelled");break;}
    }

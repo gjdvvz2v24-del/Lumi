@@ -4,6 +4,10 @@
 static QueueHandle_t sol_requests;
 static cJSON *sol_template;
 static char sol_previous[160];
+/* A tool result is sent with the next user turn, preserving Responses history
+   without another paid model call just to acknowledge song playback. */
+static char sol_music_pending_id[160];
+static bool sol_music_requested,sol_music_succeeded;
 static uint32_t sol_context_generation;
 static bool sol_greeted;
 static int64_t sol_last_activity_ms;
@@ -16,7 +20,7 @@ static bool sol_idle_expired(int64_t now){return now>=sol_last_activity_ms&&now-
 /* ASR transport reconnect is not a new user conversation. */
 static void sol_begin_generation(uint32_t generation){
  if(sol_context_generation==generation)return;
- sol_http_drop();sol_context_generation=generation;sol_previous[0]=0;sol_greeted=false;sol_last_activity_ms=bober_now_ms();
+ sol_http_drop();sol_context_generation=generation;sol_previous[0]=0;sol_music_pending_id[0]=0;sol_music_requested=false;sol_music_succeeded=false;sol_greeted=false;sol_last_activity_ms=bober_now_ms();
 }
 
 static char *sol_prepare(char *session_json){
@@ -39,6 +43,8 @@ static char *sol_prepare(char *session_json){
  if(ok){cJSON_AddItemToObject(sol_template,"reasoning",reason);reason=NULL;
   cJSON *copy=cJSON_Duplicate(tools,true);ok=copy&&cJSON_AddItemToObject(sol_template,"tools",copy);
   if(!ok)cJSON_Delete(copy);
+  if(ok){cJSON *music=lumi_music_tool();ok=music&&cJSON_AddItemToArray(copy,music);if(!ok)cJSON_Delete(music);}
+  if(ok)ok=cJSON_AddBoolToObject(sol_template,"parallel_tool_calls",false)!=NULL;
  }
  cJSON_Delete(reason);
  char *out=ok?cJSON_PrintUnformatted(root):NULL;cJSON_Delete(root);return out;
@@ -58,10 +64,20 @@ static void sol_submit(const char *text){
 
 static bool sol_generate(reply_t *r){
  bool ok=false;char *body=NULL,*data=NULL;cJSON *root=NULL;
+ sol_music_requested=false;
  if(!current(r->generation)||!sol_template||!g_cfg.sol_key[0])return false;
  cJSON *req=cJSON_Duplicate(sol_template,true);
  if(!req)return false;
- if(!cJSON_AddStringToObject(req,"input",r->text))goto payload_done;
+ if(sol_music_pending_id[0]){
+  cJSON *input=cJSON_AddArrayToObject(req,"input");if(!input)goto payload_done;
+  cJSON *result=cJSON_CreateObject(),*user=cJSON_CreateObject();
+  if(!result||!user){cJSON_Delete(result);cJSON_Delete(user);goto payload_done;}
+  cJSON_AddItemToArray(input,result);cJSON_AddItemToArray(input,user);
+  if(!cJSON_AddStringToObject(result,"type","function_call_output")||
+     !cJSON_AddStringToObject(result,"call_id",sol_music_pending_id)||
+     !cJSON_AddStringToObject(result,"output",sol_music_succeeded?"Played a newly generated random 30-second Polish song.":"Music generation or playback failed. No automatic retry was made.")||
+     !cJSON_AddStringToObject(user,"role","user")||!cJSON_AddStringToObject(user,"content",r->text))goto payload_done;
+ }else if(!cJSON_AddStringToObject(req,"input",r->text))goto payload_done;
  if(sol_previous[0]&&!cJSON_AddStringToObject(req,"previous_response_id",sol_previous))goto payload_done;
  body=cJSON_PrintUnformatted(req);
  payload_done:cJSON_Delete(req);if(!body)return false;
@@ -110,14 +126,22 @@ static bool sol_generate(reply_t *r){
  data[used]=0;root=cJSON_Parse(data);
  if(strcmp(str(root,"status"),"completed")||strcmp(str(root,"service_tier"),"ultrafast"))goto done;
  const char *id=str(root,"id");if(!id[0]||strlen(id)>=sizeof(sol_previous))goto done;
- bool ending=false;char farewell[513]={0};size_t text_used=0;
+ bool ending=false,music=false;char music_call[160]={0},farewell[513]={0};size_t text_used=0;
  r->text[0]=0;
  cJSON *item,*part;
  cJSON_ArrayForEach(item,cJSON_GetObjectItem(root,"output")){
   const char *type=str(item,"type");
   if(!strcmp(type,"reasoning"))continue;
   if(!strcmp(type,"function_call")){
-   if(ending||strcmp(str(item,"name"),"end_conversation"))goto done;
+   if(ending||music)goto done;
+   if(!strcmp(str(item,"name"),"play_random_song")){
+    const char *call=str(item,"call_id");size_t n=strlen(call);
+    cJSON *args=cJSON_Parse(str(item,"arguments"));
+    bool valid=n>0&&n<sizeof(music_call)&&cJSON_IsObject(args)&&cJSON_GetArraySize(args)==0;
+    cJSON_Delete(args);if(!valid)goto done;
+    memcpy(music_call,call,n+1);music=true;continue;
+   }
+   if(strcmp(str(item,"name"),"end_conversation"))goto done;
    cJSON *args=cJSON_Parse(str(item,"arguments"));const char *bye=str(args,"farewell");size_t n=strlen(bye);
    bool valid=n>0&&n<sizeof(farewell)&&strspn(bye," \t\r\n")<n;
    if(valid)memcpy(farewell,bye,n+1);
@@ -135,8 +159,10 @@ static bool sol_generate(reply_t *r){
   }
  }
  if(ending)strlcpy(r->text,farewell,sizeof(r->text));
- if(!r->text[0]||!current(r->generation))goto done;
+ if((!r->text[0]&&!music)||!current(r->generation))goto done;
  strlcpy(sol_previous,id,sizeof(sol_previous));
+ strlcpy(sol_music_pending_id,music_call,sizeof(sol_music_pending_id));
+ sol_music_requested=music;sol_music_succeeded=false;
  if(ending)atomic_store(&end_after_reply,true);
  sol_last_activity_ms=bober_now_ms();
  sol_http_used_ms=bober_now_ms();

@@ -394,3 +394,22 @@ about the AI model: „model kupa dupa sraka by Tatuś”. The axolotl identity 
 Grzegorz creator answer remain. The guarded updater verified the partition table
 and prompt image hash; it did not rewrite the application or NVS. The generated
 fallback header in Git also contains the updated prompt for subsequent builds.
+
+## Random song module (2026-10-26, prepared)
+
+Sol exposes `play_random_song` only in this experimental backend. A request to
+sing something or play a song invokes ElevenLabs Music (`music_v2`), with a random
+combination of eight styles and eight topics, new Polish lyrics and female vocals.
+It does not promise the configured TTS voice or reproduce a named existing song.
+Ordinary discussion, quoted requests and negated requests must not invoke Music.
+
+One `POST /v1/music?output_format=pcm_16000`, `music_length_ms=30000`, using the
+existing ElevenLabs NVS `key`. No additional OpenAI scope and no key in Git.
+A real host request returned HTTP 200: this key already has Music access. It took
+7.6 s and returned 1,920,000 bytes of stereo signed PCM16 at 16 kHz (30 seconds).
+The player downmixes stereo frames to mono for the existing FIFO. It preserves
+partial frames across chunks, checks the exact duration, and rejects JSON/errors.
+No automatic paid retries. Generation has a 120 s HTTP timeout / 180 s total
+budget; after headers, no-progress timeout is 30 s. The mic resumes only after
+the existing playback drain and cue. A song tool result joins the next user turn
+in Responses history, without another model call solely for acknowledgement.
