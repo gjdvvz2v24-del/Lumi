@@ -395,7 +395,7 @@ Grzegorz creator answer remain. The guarded updater verified the partition table
 and prompt image hash; it did not rewrite the application or NVS. The generated
 fallback header in Git also contains the updated prompt for subsequent builds.
 
-## Random song module (2026-10-26, prepared)
+## Random song module (2026-10-26, deployed app)
 
 Sol exposes `play_random_song` only in this experimental backend. A request to
 sing something or play a song invokes ElevenLabs Music (`music_v2`), with a random
@@ -413,3 +413,13 @@ No automatic paid retries. Generation has a 120 s HTTP timeout / 180 s total
 budget; after headers, no-progress timeout is 30 s. The mic resumes only after
 the existing playback drain and cue. A song tool result joins the next user turn
 in Responses history, without another model call solely for acknowledgement.
+
+Validation: native `test_music_stream.py`, `test_sol_firmware.py`,
+`test_tts_stream.py`, `test_fillers.py` and `test_lumi_profile.py` passed;
+full ESP-IDF build passed. Published app and ZIP are `2.10.0-music`.
+App SHA-256: `4901580a26f48536721ea9d315b50df62b5dcf96b497cdb35b1717249b4592d9`.
+Flashed only app at `0x10000`; readback comparison confirmed identical protected
+partitions (`0x8000..0xffff`, including NVS/keys/Wi-Fi) and promptfs. Boot reported
+the new version, Wi-Fi IP ready at 4.9 s, and no panic. Host Music generation and
+30 s PCM format are verified; physical song playback awaits a spoken request and
+listening confirmation. No second song has been generated automatically for tests.
