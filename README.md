@@ -21,6 +21,24 @@ obsługuje `firmware/configure_wifi_usb.py`; zachowuje klucze usług i prompt.
 Bez nowych profili nadal korzysta z dotychczas zapisanej sieci. Zmiany stosuje
 po restarcie; narzędzie wymaga firmware z obsługą tego polecenia USB.
 
+## Klucze obu backendów
+
+Kod i konfiguracja modeli są w Git; sekrety są w NVS urządzenia i w prywatnej
+kopii diagnostycznej poza repozytorium. W wariancie Sol działają równolegle:
+
+- `bober/openai` — dotychczasowy klucz Realtime, używany do ASR/VAD.
+- `bober/sol` — osobny klucz Responses dla Sol Ultrafast; nie ma fallbacku do
+  klucza Realtime. Od 26.10.2026 używany jest „Lumi Sol Ultrafast — stały”,
+  Restricted / Responses Write, bez daty wygaśnięcia.
+- `bober/key` — ElevenLabs TTS.
+
+Testowy klucz Sol był fizycznie zachowany po flashowaniu, lecz 26.10.2026 OpenAI
+odrzucał go jako `401 invalid_api_key`. Wymieniono wyłącznie `bober/sol` przez
+istniejące polecenie USB `LUMI_SOL_KEY <sekret>` w trybie oczekiwania. Odczyt NVS
+potwierdził nowy klucz i brak zmian w Realtime/TTS oraz profilach Wi-Fi. Udana
+rozmowa na urządzeniu potwierdziła Sol Ultrafast, pełne TTS i powrót mikrofonu.
+Nie zapisuj wartości kluczy ani haseł Wi-Fi do Gita ani do logów.
+
 ## Prompt i budowanie
 
 Źródłem instrukcji jest `firmware/prompt.txt`, a powitania i ustawień `firmware/agent-profile.json`.

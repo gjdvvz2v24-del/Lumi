@@ -337,3 +337,27 @@ This verifies physical startup selection and profile provisioning. Re-selection
 following an actual link loss, spoken response quality, physical volume and a
 long live story have not yet been retested. The three/five-minute TTS evidence
 above remains a native synthetic test, not a live ElevenLabs/device conversation.
+
+
+### Permanent Sol credential — 2026-10-26
+
+A fresh physical NVS read confirmed two distinct OpenAI credentials. A free model
+lookup accepted the original Realtime key (HTTP 200) but rejected the stored Sol
+test key (HTTP 401, `invalid_api_key`). The test key had not been removed by app
+flashing. Its previous recorded expiration was October 26, but the current panel
+had no expired/revoked record from which to prove who or what invalidated it.
+
+At the user's explicit request and final confirmation, created
+„Lumi Sol Ultrafast — stały” in the same project, Restricted / Responses Write,
+with expiry Never. A deliberately invalid `max_output_tokens=0` Responses request
+passed authentication and returned HTTP 400 on that parameter, without generation.
+The existing USB setter saved only `bober/sol`. Physical NVS readback matched the
+new secret; all other string values in namespace `bober`, including Realtime,
+ElevenLabs and the three Wi-Fi profiles, matched their pre-update values.
+The temporary transfer file was deleted. Credentials and private NVS backups
+remain outside Git; no app/prompt reflash was needed for this repair.
+
+The user's physical conversation then completed: Sol served tier `ultrafast`
+in 4354 ms, TTS completed 3840 ms of audio, and the microphone returned to listening.
+This verifies the credential repair and one short live turn. Long live stories
+and physical disconnect/reselection still require their own device tests.
