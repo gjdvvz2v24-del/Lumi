@@ -500,3 +500,12 @@ angles and 8 moods. The last six subjects are excluded from each new pick,
 including when the random source repeats. This is local selection, so it adds no
 extra model calls. The 60-second duration, cached announcement, Assets archive
 and screen timeout stay enabled.
+
+2.11.1-diverse: payload diversity and full producer tests passed; full ESP-IDF
+build passed. Published app SHA-256:
+`dc9dbd818939c48313994b0d2fdc9712b3b4cc0fd2b4d7ed61a03bc574f5c2d5`.
+App-only flash completed; protected partitions and promptfs remained identical.
+Boot reported the new version, Wi-Fi ready and no panic. The prior physical
+60-second Assets upload/download and display wake acceptance remain the evidence
+for the unchanged archive/display code; the expanded topics were tested without
+additional paid song generations.
