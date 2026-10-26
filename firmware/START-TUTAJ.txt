@@ -1,4 +1,4 @@
-Lumi 2.11.0-archive — eksperymentalny Sol Ultrafast
+Lumi 2.11.1-diverse — eksperymentalny Sol Ultrafast
 
 Po rozpakowaniu zawsze otwórz katalog firmware.
 Wgrywanie: bash dist/flash_prebuilt.sh /dev/cu.usbmodem1101

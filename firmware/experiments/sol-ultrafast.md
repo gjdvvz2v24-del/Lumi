@@ -491,3 +491,12 @@ timeout and a button-only display wake with the conversation still active.
 User confirmed the image returned on the short press. Host Assets test saved
 `Lumi-test-archive-30s.wav` and downloaded identical bytes; the file is visible
 in Zasoby > Przesłane pliki. Physical new-song archive test is in progress.
+
+### More varied songs (2.11.1-diverse)
+
+Expanded to 64 subjects across everyday life, school, sport, food, technology,
+friendship, exploration, fantasy and travel; 16 genres, 16 settings, 16 story
+angles and 8 moods. The last six subjects are excluded from each new pick,
+including when the random source repeats. This is local selection, so it adds no
+extra model calls. The 60-second duration, cached announcement, Assets archive
+and screen timeout stay enabled.
