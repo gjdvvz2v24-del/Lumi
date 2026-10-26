@@ -1,4 +1,4 @@
 cmake_minimum_required(VERSION 3.16)
-set(PROJECT_VER "2.9.3-singing")
+set(PROJECT_VER "2.10.0-music")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(bober_s3r_openai)

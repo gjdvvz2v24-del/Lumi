@@ -68,7 +68,7 @@ void app_main(void){
  (void)bober_power_woke();
  if(!bober_power_init()){ESP_LOGE(TAG,"Power coordinator allocation failed");return;}
  esp_err_t e=nvs_flash_init();if(e==ESP_ERR_NVS_NO_FREE_PAGES||e==ESP_ERR_NVS_NEW_VERSION_FOUND){ESP_ERROR_CHECK(nvs_flash_erase());e=nvs_flash_init();}ESP_ERROR_CHECK(e);
- load();ESP_LOGI(TAG,"Lumi OpenAI v2.9.3-singing / Hej Lumi + Luuu-miiii local wake / 115200");
+ load();ESP_LOGI(TAG,"Lumi OpenAI v2.10.0-music / Hej Lumi + Luuu-miiii local wake / 115200");
  ESP_LOGI(TAG,"PSRAM free=%u",(unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
  g_pcm_mutex=xSemaphoreCreateMutex();g_uplink=xStreamBufferCreate(16384,1);
  g_pcm_ring=heap_caps_malloc(BOBER_PCM_CAPACITY,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);

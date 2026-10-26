@@ -104,7 +104,15 @@ int main(void){
  fake_response="{\"id\":\"after_song\",\"status\":\"completed\",\"service_tier\":\"ultrafast\",\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":\"Proszę!\"}]}]}";
  assert(sol_generate(&queued));assert(!sol_music_requested&&!sol_music_pending_id[0]);
  assert(strstr(request_body,"function_call_output")&&strstr(request_body,"song_call_1")&&strstr(request_body,"Dzięki!"));
- cancel_on_read=true;assert(!sol_generate(&queued));assert(!strcmp(sol_previous,"after_song"));
+
+ fake_response="{\"id\":\"bad_song\",\"status\":\"completed\",\"service_tier\":\"ultrafast\",\"output\":[{\"type\":\"function_call\",\"name\":\"play_random_song\",\"call_id\":\"x\",\"arguments\":\"{\\\"unexpected\\\":true}\"}]}";
+ assert(!sol_generate(&queued)&&!sol_music_requested&&!strcmp(sol_previous,"after_song"));
+ fake_response="{\"id\":\"song2\",\"status\":\"completed\",\"service_tier\":\"ultrafast\",\"output\":[{\"type\":\"function_call\",\"name\":\"play_random_song\",\"call_id\":\"song_call_2\",\"arguments\":\"{}\"}]}";
+ assert(sol_generate(&queued)&&sol_music_requested);sol_music_succeeded=false;
+ fake_status=503;assert(!sol_generate(&queued));assert(!strcmp(sol_music_pending_id,"song_call_2"));
+ assert(strstr(request_body,"playback failed")&&strstr(request_body,"function_call_output"));
+ fake_status=200;
+ cancel_on_read=true;assert(!sol_generate(&queued));assert(!strcmp(sol_previous,"song2"));
  active=true;cancel_on_read=false;fake_status=403;assert(!sol_generate(&queued));
  assert(!sol_http);
  cJSON_Delete(sol_template);puts("PASS: actual C backend config, queue gate, text, history, incomplete/tier/error rejection, farewell, cancellation");
