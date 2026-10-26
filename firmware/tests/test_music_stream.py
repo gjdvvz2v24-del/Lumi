@@ -42,7 +42,7 @@ static int esp_http_client_init(esp_http_client_config_t *c){
  assert(!strcmp(c->url,"https://api.elevenlabs.io/v1/music?output_format=pcm_16000"));return 1;
 }
 static void esp_http_client_set_header(int h,const char *key,const char *value){assert(h&&key&&value);}
-static int esp_http_client_open(int h,size_t n){assert(h&&n);opens++;return 0;}
+static int esp_http_client_open(int h,size_t n){assert(h&&n&&output_size==320&&!g_response_complete);opens++;return 0;}
 static int esp_http_client_write(int h,const char *body,size_t n){
  assert(h&&n);cJSON *j=cJSON_ParseWithLength(body,n);assert(j);
  assert(!strcmp(cJSON_GetObjectItem(j,"model_id")->valuestring,"music_v2"));
