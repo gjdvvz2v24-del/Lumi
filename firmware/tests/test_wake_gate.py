@@ -15,7 +15,7 @@ prefix=r'''
 #include <stdarg.h>
 #include <setjmp.h>
 #include <stdatomic.h>
-static atomic_bool shake_wake_requested;
+static atomic_bool shake_wake_requested,offline_sound_busy;
 void bober_request_shake_wake(void);
 #define ESP_OK 0
 #define BOBER_POWER_MIC 1
@@ -50,9 +50,9 @@ static float lumi_wake_signal_ratio(void){return 0.01f;}
 static bool lumi_wake_signal_ready(void){return true;}
 static bool lumi_wake_process(const int16_t *pcm,size_t n){
  assert(!g_session_enabled&&g_phase==BOBER_WAKE_WAIT);assert(n==320);
- for(size_t i=0;i<n;++i)assert(pcm[i]==1000);
+ for(size_t i=0;i<n;++i)assert(pcm[i]==(atomic_load(&offline_sound_busy)?0:1000));
  processes++;if(scenario==2)healthy=false;
- return scenario==0&&(stage==1||stage==6);
+ return scenario==4||(scenario==0&&(stage==1||stage==6));
 }
 static void xStreamBufferReset(int q){assert(q==1&&!g_session_enabled);resets++;}
 static size_t xStreamBufferSend(int q,const void *p,size_t n,unsigned timeout){
@@ -60,7 +60,11 @@ static size_t xStreamBufferSend(int q,const void *p,size_t n,unsigned timeout){
 }
 static int i2s_channel_read(int ch,void *buf,size_t n,size_t *got,unsigned timeout){
  (void)ch;(void)timeout;assert(n==2560);stage=reads++;
- if(scenario==1||scenario==2){
+ if(scenario==4){
+  if(stage==0)atomic_store(&offline_sound_busy,true);
+  if(stage==1){assert(!g_session_enabled&&processes==1&&!sends);atomic_store(&offline_sound_busy,false);}
+  if(stage==2){assert(g_session_enabled&&g_generation==2&&processes==2&&resets==1);power=true;return -1;}
+ }else if(scenario==1||scenario==2){
   if(stage==1){assert(g_phase==BOBER_OFF&&!g_session_enabled&&!sends);assert(inits==1);assert(processes==(scenario==2));assert(deinits==(scenario==2));longjmp(done,1);}
  }else{
   if(stage==1){assert(!g_session_enabled&&!sends&&processes==1&&inits==1);if(scenario==3){bober_request_shake_wake();bober_request_shake_wake();}}
@@ -78,13 +82,13 @@ static int i2s_channel_read(int ch,void *buf,size_t n,size_t *got,unsigned timeo
 '''
 main=r'''
 int main(void){
- for(scenario=0;scenario<4;++scenario){
+ for(scenario=0;scenario<5;++scenario){
   g_session_enabled=g_ws_ready=g_ws_reconnect=power=healthy=false;g_phase=BOBER_WAKE_WAIT;g_generation=1;
-  atomic_store(&shake_wake_requested,false);
+  atomic_store(&shake_wake_requested,false);atomic_store(&offline_sound_busy,false);
   stage=reads=inits=deinits=processes=sends=resets=0;dc_prev_x=dc_prev_y=0;
   if(!setjmp(done))bober_mic_task(NULL);
  }
- puts("PASS: local-only waiting, word and shake/conversation/end/second wake, no uplink before connection, no wake during speech, fail-closed init/inference, power checkpoint");
+ puts("PASS: local-only waiting, word and shake/conversation/end/second wake, no uplink before connection, no wake during speech/snore, fail-closed init/inference, power checkpoint");
 }
 '''
 with tempfile.TemporaryDirectory() as tmp:

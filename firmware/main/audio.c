@@ -1,6 +1,7 @@
 #include "bober.h"
 #include "wake_detector.h"
 #include "wake_capture.h"
+#include "offline_snore.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdatomic.h>
@@ -20,6 +21,9 @@ static int32_t dc_prev_x=0,dc_prev_y=0;
 /* IMU only requests a wake. The microphone owner releases both models before
    enabling TLS, just as for an acoustic wake; simultaneous triggers coalesce. */
 static atomic_bool shake_wake_requested;
+static atomic_bool offline_sound_busy;
+extern const uint8_t snore_start[] asm("_binary_lumi_snore_pcm_start");
+extern const uint8_t snore_end[] asm("_binary_lumi_snore_pcm_end");
 void bober_request_shake_wake(void){
  if(!g_session_enabled&&g_phase==BOBER_WAKE_WAIT&&!bober_power_requested())
   atomic_store(&shake_wake_requested,true);
@@ -143,7 +147,9 @@ void bober_mic_task(void *arg){
    }
    bool capturing=lumi_capture_feed(pcm,n);
    int64_t wake_begin=bober_now_ms();
-   bool detected=lumi_wake_process(pcm,n);
+   bool own_sound=atomic_load(&offline_sound_busy);
+   if(own_sound)memset(pcm,0,n*sizeof(*pcm));
+   bool detected=lumi_wake_process(pcm,n)&&!own_sound;
    bool shaken=atomic_exchange(&shake_wake_requested,false);
    wake_process_ms+=(uint32_t)(bober_now_ms()-wake_begin);wake_samples+=(uint32_t)n;
    float wake_raw=lumi_wake_peak_score();if(wake_raw>wake_raw_peak)wake_raw_peak=wake_raw;
@@ -240,20 +246,29 @@ void bober_speaker_task(void *arg)
  static int16_t mono[320];
  static int32_t out[320*2];
  bool amp_on=false;
+ lumi_snore_state_t snore={0};
  while(1){
   if(bober_power_requested()){
-   set_amp(false);lumi_reaction_read((uint8_t*)mono,sizeof(mono),false,(uint32_t)bober_now_ms());
+   set_amp(false);memset(&snore,0,sizeof(snore));atomic_store(&offline_sound_busy,false);lumi_reaction_read((uint8_t*)mono,sizeof(mono),false,(uint32_t)bober_now_ms());
    bober_power_checkpoint(BOBER_POWER_SPEAKER);
   }
   uint32_t generation=g_generation;
   bool speaking=g_ws_ready&&g_session_enabled&&g_phase==BOBER_SPEAKING;
   size_t n=lumi_reaction_read((uint8_t*)mono,sizeof(mono),g_session_enabled,(uint32_t)bober_now_ms());
   bool reacting=n>0||lumi_reaction_busy();
-  if(!reacting)n=speaking?bober_pcm_pop((uint8_t*)mono,sizeof(mono)):0;
-  speaking=speaking||reacting;
+  bool was_offline=snore.offline,was_playing=snore.playing;
+  size_t local=lumi_snore_read(&snore,snore_start,(size_t)(snore_end-snore_start),(uint8_t*)mono,sizeof(mono),g_wifi_ready,!speaking&&!reacting,(uint32_t)bober_now_ms());
+  if(local&&!was_playing)ESP_LOGI(TAG,"Wi-Fi offline: short snore");
+  if(g_wifi_ready&&was_offline)ESP_LOGI(TAG,"Wi-Fi connected: offline sound stopped");
+  bool snoring=local>0||(!speaking&&!reacting&&!g_wifi_ready&&lumi_snore_busy(&snore));
+  atomic_store(&offline_sound_busy,lumi_snore_busy(&snore));
+  if(snoring)n=local;
+  else if(!reacting)n=speaking?bober_pcm_pop((uint8_t*)mono,sizeof(mono)):0;
+  speaking=speaking||reacting||snoring;
   if(n)g_last_play_ms=bober_now_ms();
   if(n<sizeof(mono))memset((uint8_t*)mono+n,0,sizeof(mono)-n);
-  if(generation!=g_generation||!g_session_enabled||bober_power_requested()){
+  if((!snoring&&(generation!=g_generation||!g_session_enabled))||
+     (snoring&&g_wifi_ready)||bober_power_requested()){
    memset(mono,0,sizeof(mono));speaking=false;
   }
   if(speaking!=amp_on){set_amp(speaking);amp_on=speaking;}

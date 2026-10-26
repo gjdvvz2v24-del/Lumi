@@ -10,11 +10,17 @@ prefix=r'''
 #include <string.h>
 #include <assert.h>
 #include <setjmp.h>
+#include <stdatomic.h>
+#include "offline_snore.h"
+static atomic_bool offline_sound_busy;
+static const uint8_t snore_start[2]={0};
+#define snore_end (snore_start+2)
 #include <stdio.h>
+#define ESP_LOGI(...) ((void)0)
 #define BOBER_POWER_SPEAKER 2
 #define BOBER_SPEAKING 2
 #define pdMS_TO_TICKS(x) (x)
-static bool power,amp,g_ws_ready=true,g_session_enabled=true;
+static bool power,amp,g_ws_ready=true,g_session_enabled=true,g_wifi_ready=true;
 static uint32_t g_generation=1;
 static int g_phase=2,tx,stage,pops;
 static int64_t g_last_play_ms;
@@ -52,5 +58,5 @@ int main(void){if(!setjmp(done))bober_speaker_task(NULL);assert(stage==6&&!amp&&
 '''
 with tempfile.TemporaryDirectory() as d:
  p=Path(d);(p/'test.c').write_text(prefix+speaker+main)
- subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined',str(p/'test.c'),'-o',str(p/'test')],check=True)
+ subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-I'+str(root/'main'),str(root/'main/offline_snore.c'),str(p/'test.c'),'-o',str(p/'test')],check=True)
  subprocess.run([str(p/'test')],check=True)

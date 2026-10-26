@@ -361,3 +361,22 @@ The user's physical conversation then completed: Sol served tier `ultrafast`
 in 4354 ms, TTS completed 3840 ms of audio, and the microphone returned to listening.
 This verifies the credential repair and one short live turn. Long live stories
 and physical disconnect/reselection still require their own device tests.
+
+### Offline snore
+
+A locally synthesized 650 ms nasal snore is stored in `assets/lumi_snore.pcm`.
+The existing I2S speaker owner plays it every five seconds while `g_wifi_ready`
+is false, starting five seconds after detecting the offline state. It also works
+in local WAKE_WAIT, without an enabled conversation. Once Wi-Fi obtains an IP,
+new snore PCM stops immediately; already queued DMA audio may take its ordinary
+short hardware tail to settle. It never preempts TTS or reaction audio and is
+silenced during power shutdown. Healthy Wi-Fi is silent.
+
+The scheduler and 180 ms echo guard are speaker-owned. The wake classifier gets
+zeroed input and ignores detections while the local snore/echo guard is active,
+so the device cannot wake itself on its own effect. Explicit strong-shake wake
+is still accepted. There is no API call or extra audio task. Regenerate with
+`python3 firmware/tools/generate_snore.py`; optional `--preview PATH.wav` writes
+a local listenable preview. Native tests execute the real scheduler and speaker
+with Wi-Fi/session transitions, verify full clips five seconds apart, immediate
+reconnect cancellation, audio priority, timer wrap, power and self-wake masking.
