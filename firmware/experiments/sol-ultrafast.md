@@ -421,5 +421,8 @@ App SHA-256: `4901580a26f48536721ea9d315b50df62b5dcf96b497cdb35b1717249b4592d9`.
 Flashed only app at `0x10000`; readback comparison confirmed identical protected
 partitions (`0x8000..0xffff`, including NVS/keys/Wi-Fi) and promptfs. Boot reported
 the new version, Wi-Fi IP ready at 4.9 s, and no panic. Host Music generation and
-30 s PCM format are verified; physical song playback awaits a spoken request and
-listening confirmation. No second song has been generated automatically for tests.
+30 s PCM format are verified. A spoken request on the physical Atom invoked
+Music: first PCM after 6,531 ms, complete 30 s audio downloaded after 14,965 ms.
+The speaker FIFO drained and microphone cue/listening resumed afterwards. Audible
+quality still requires user confirmation. Tests do not automatically retry or
+generate additional songs.
