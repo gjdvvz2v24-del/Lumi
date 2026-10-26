@@ -461,3 +461,23 @@ https://elevenlabs.io/docs/api-reference/history/list .
 The Music upload endpoint is also for editing and charges the same as generation;
 no upload or repeated full-length generation was used as a saving workaround.
 The current firmware streams and plays songs; it does not retain song files.
+
+## Automatic Assets archive + display timeout (2.11.0-archive, prepared)
+
+Every complete song is captured as 16 kHz mono PCM16 WAV (60 s = 1,920,044 bytes)
+and uploaded with `POST /v1/assets` under a timestamp/unique name `Lumi-...-60s.wav`.
+This is the same audio played by Atom, without its cached spoken announcement.
+The existing Eleven key was verified against Assets: upload/download of the
+30 s host sample succeeded with identical SHA-256. No new generation was needed.
+
+The archive buffer is reserved in PSRAM before a paid Music call. Completed
+pending uploads survive conversation and Wi-Fi reconnects in RAM; upload retries
+run in wake-wait or speaking periods. The unique filename is checked after an
+ambiguous POST to avoid duplicates. No new song overwrites an unsaved buffer.
+A power loss before successful upload can lose that RAM-only pending file.
+
+Display and backlight turn off at 60 s after boot. A short button press when off
+wakes only the display for another 60 s; it does not restart the conversation.
+While the display is on, short-press restart and long-press sleep remain available.
+Audio, Wi-Fi and motion do not wake the display. Both animation and fallback status
+paths honour the timeout. A restart starts a fresh 60 s window.

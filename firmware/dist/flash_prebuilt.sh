@@ -3,7 +3,7 @@ set -euo pipefail
 : "${1:?Podaj port USB urządzenia, np. /dev/cu.usbmodem1101}"
 cd "$(dirname "$0")"
 PYTHON_BIN="${PYTHON:-python3}"
-echo "Lumi 2.10.1-music: Sol Ultrafast, losowe piosenki Eleven Music, chrapanie bez Wi-Fi. Aktualizacja aplikacji i promptfs; klucze i Wi-Fi pozostają w NVS."
+echo "Lumi 2.11.0-archive: Sol Ultrafast, losowe piosenki Eleven Music, chrapanie bez Wi-Fi. Aktualizacja aplikacji i promptfs; klucze i Wi-Fi pozostają w NVS."
 shasum -a 256 -c SHA256SUMS.txt
 check_dir=$(mktemp -d)
 trap 'rm -rf "$check_dir"' EXIT

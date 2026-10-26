@@ -270,6 +270,7 @@ static bool speak(const reply_t *r){
 }
 #ifdef LUMI_SOL_ULTRAFAST
 #include "sol_fillers.inc"
+#include "music_archive.inc"
 #include "music_stream.inc"
 #endif
 static bool wait_clock(void){
@@ -291,6 +292,9 @@ void bober_eleven_task(void *arg){
  for(;;){
   bober_power_checkpoint(BOBER_POWER_NETWORK);
   if(!g_wifi_ready){vTaskDelay(pdMS_TO_TICKS(150));continue;}
+#ifdef LUMI_SOL_ULTRAFAST
+  if(!g_session_enabled)music_archive_tick();
+#endif
   if(!g_session_enabled){vTaskDelay(pdMS_TO_TICKS(150));continue;}
   uint32_t gen=g_generation;
   if(!g_cfg.openai_key[0]||!g_cfg.api_key[0]){ESP_LOGE(TAG,"Missing OpenAI/TTS key; configure_usb.py required");g_session_enabled=false;g_phase=BOBER_OFF;continue;}
@@ -325,6 +329,9 @@ void bober_eleven_task(void *arg){
    }
    if(!configured&&now-start>25000)break;
    if(configured&&!transport)break;
+#ifdef LUMI_SOL_ULTRAFAST
+   if(configured&&g_phase==BOBER_SPEAKING)music_archive_tick();
+#endif
    if(configured&&greeted&&g_phase==BOBER_CONNECTING)begin_listening();
    if(configured&&!greeted){
     greeted=true;g_phase=BOBER_SPEAKING;g_response_complete=false;g_last_tts_begin_ms=now;
@@ -346,7 +353,7 @@ void bober_eleven_task(void *arg){
      if(!current(gen)||g_ws_reconnect)break;
      if(sol_music_succeeded)continue;
      bober_pcm_reset();
-     strlcpy(r->text,"Nie udało mi się wygenerować piosenki. Spróbuj później.",sizeof(r->text));
+     strlcpy(r->text,music_archive_blocked?"Jeszcze zapisuję poprzednią piosenkę. Spróbuj za chwilę.":"Nie udało mi się wygenerować piosenki. Spróbuj później.",sizeof(r->text));
     }
     if(!current(gen)||!speak(r)){ESP_LOGW(TAG,"Reconnect: Sol TTS failed or session cancelled");break;}
    }

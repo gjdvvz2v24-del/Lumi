@@ -24,7 +24,8 @@ static bool play_random_song(const reply_t *r){
  esp_http_client_config_t cfg={.url="https://api.elevenlabs.io/v1/music?output_format=pcm_16000",
   .method=HTTP_METHOD_POST,.timeout_ms=120000,.buffer_size=2048,
   .crt_bundle_attach=esp_crt_bundle_attach,.disable_auto_redirect=true,.event_handler=header,.user_data=&bad};
- esp_http_client_handle_t h=esp_http_client_init(&cfg);if(!h){free(body);return false;}
+ if(!music_archive_begin()){free(body);return false;}
+ esp_http_client_handle_t h=esp_http_client_init(&cfg);if(!h){free(body);music_archive_discard();return false;}
  uint8_t stereo[2048],mono[1024];
  esp_http_client_set_header(h,"xi-api-key",g_cfg.api_key);
  esp_http_client_set_header(h,"Content-Type","application/json");esp_http_client_set_header(h,"Accept","audio/pcm");
@@ -63,6 +64,7 @@ static bool play_random_song(const reply_t *r){
    uint16_t sample=(uint16_t)(int16_t)((left+right)/2);
    mono[i*2]=(uint8_t)sample;mono[i*2+1]=(uint8_t)(sample>>8);
   }
+  if(frames&&!music_archive_append(mono,frames*2)){stage="archive_buffer";goto done;}
   while(frames&&!bober_pcm_push(mono,frames*2,r->generation)){
    if(g_last_play_ms!=last_play){last_play=g_last_play_ms;last_progress=bober_now_ms();}
    if(!current(r->generation)||g_ws_reconnect||bober_now_ms()>=deadline||bober_now_ms()-last_progress>30000){stage="backpressure";goto done;}
@@ -73,6 +75,8 @@ static bool play_random_song(const reply_t *r){
  }
  done:
  free(body);esp_http_client_close(h);esp_http_client_cleanup(h);
+ if(ok){music_archive_ready=true;music_archive_tick();}
+ else music_archive_discard();
  if(ok&&current(r->generation)&&!g_ws_reconnect){
   g_response_complete=true;sol_last_activity_ms=bober_now_ms();
   ESP_LOGI(TAG,"Music complete: audio_ms=%u elapsed_ms=%lld",LUMI_MUSIC_MS,(long long)(bober_now_ms()-start));return true;

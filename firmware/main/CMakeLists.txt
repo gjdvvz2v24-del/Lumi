@@ -1,4 +1,4 @@
-idf_component_register(SRCS "wake_capture.c" "prompt_store.c" "main.c" "wifi.c" "audio.c" "eleven.c" "screen.c" "button.c" "animation.c" "interaction.c" "orientation.c" "imu.c" "motion.c" "reactions.c" "offline_snore.c" "power.c"
+idf_component_register(SRCS "display_idle.c" "wake_capture.c" "prompt_store.c" "main.c" "wifi.c" "audio.c" "eleven.c" "screen.c" "button.c" "animation.c" "interaction.c" "orientation.c" "imu.c" "motion.c" "reactions.c" "offline_snore.c" "power.c"
   INCLUDE_DIRS "."
   EMBED_FILES "assets/loop.banim" "assets/lumi_impact.pcm" "assets/lumi_shake.pcm" "assets/lumi_snore.pcm"
   REQUIRES lumi_wake spiffs nvs_flash esp_wifi esp_netif esp_event esp_http_client esp-tls mbedtls json esp_timer esp_driver_gpio esp_driver_i2c esp_driver_i2s esp_driver_spi espressif__esp_codec_dev espressif__esp_websocket_client)

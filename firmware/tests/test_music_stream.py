@@ -64,9 +64,16 @@ static bool esp_http_client_is_complete_data_received(int h){assert(h);return re
 static void esp_http_client_close(int h){assert(h);closes++;}
 static void esp_http_client_cleanup(int h){assert(h);}
 __asm__(".pushsection __TEXT,__const\n.globl _binary_music_wait_pcm_start\n_binary_music_wait_pcm_start:\n.space 320\n.globl _binary_music_wait_pcm_end\n_binary_music_wait_pcm_end:\n.popsection");
+static uint8_t archived[LUMI_MUSIC_BYTES];static size_t archived_bytes;
+static bool music_archive_ready,begin_ok=true;
+static int archive_calls;
+static bool music_archive_begin(void){archived_bytes=0;music_archive_ready=false;return begin_ok;}
+static void music_archive_discard(void){archived_bytes=0;music_archive_ready=false;}
+static bool music_archive_append(const uint8_t *p,size_t n){assert(archived_bytes+n<=sizeof(archived));memcpy(archived+archived_bytes,p,n);archived_bytes+=n;return true;}
+static void music_archive_tick(void){assert(music_archive_ready&&archived_bytes==LUMI_MUSIC_BYTES);archive_calls++;}
 #include "music_stream.inc"
 static void reset(void){
- active=true;g_ws_reconnect=g_response_complete=full_fifo=stalled=false;
+ archive_calls=0;begin_ok=true;active=true;g_ws_reconnect=g_response_complete=full_fifo=stalled=false;
  clock_ms=1000;g_last_play_ms=g_last_pcm_ms=sol_last_activity_ms=0;
  input_size=sizeof(input)-4;read_bytes=output_size=0;chunk=2048;
  opens=closes=reads=cancel_at=error_at=header_delay=0;status=200;
@@ -90,11 +97,13 @@ int main(void){
  for(size_t c=0;c<sizeof(chunks)/sizeof(*chunks);c++){
   reset();chunk=chunks[c];assert(play_random_song(&r));
   assert(output_size==LUMI_MUSIC_BYTES+320&&g_response_complete&&opens==1&&closes==1);
+  assert(archive_calls==1&&archived_bytes==LUMI_MUSIC_BYTES&&!memcmp(archived,output+320,LUMI_MUSIC_BYTES));
   for(size_t i=0;i<LUMI_MUSIC_BYTES/2;i++){
    int16_t got=(int16_t)((uint16_t)output[320+2*i]|((uint16_t)output[321+2*i]<<8));
    assert(got==(i%2?20000:-20000));
   }
  }
+ reset();begin_ok=false;assert(!play_random_song(&r)&&!opens&&!output_size);
  reset();status=401;assert(!play_random_song(&r)&&opens==1&&output_size==320&&!g_response_complete);
  reset();status=403;assert(!play_random_song(&r)&&opens==1&&output_size==320);
  reset();input_size--;assert(!play_random_song(&r)&&!g_response_complete);

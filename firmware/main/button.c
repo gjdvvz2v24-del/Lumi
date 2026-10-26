@@ -1,4 +1,5 @@
 #include "bober.h"
+#include "display_idle.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "esp_system.h"
@@ -15,7 +16,11 @@ void bober_button_task(void *arg)
  while(1){
   bober_button_event_t event=bober_button_update(&button,gpio_get_level(GPIO_NUM_41)==0,(uint32_t)bober_now_ms());
   if(event==BOBER_BUTTON_HOLD)bober_power_sleep();
-  else if(event==BOBER_BUTTON_CLICK)esp_restart();
+  else if(event==BOBER_BUTTON_CLICK){
+   uint32_t now=(uint32_t)bober_now_ms();
+   if(!lumi_display_visible(now)){lumi_display_wake(now);ESP_LOGI(TAG,"Display wake: 60 s; conversation continues");}
+   else esp_restart();
+  }
   vTaskDelay(pdMS_TO_TICKS(10));
  }
 }

@@ -12,6 +12,7 @@
  * Software quarter-turn rotation from the onboard BMI270 accelerometer.
  */
 #include "bober.h"
+#include "display_idle.h"
 #include "animation.h"
 #include "imu.h"
 #include "orientation.h"
@@ -343,6 +344,11 @@ static void play_animation(void)
             bober_power_checkpoint(BOBER_POWER_SCREEN);
             delay_ms(20);continue;
         }
+        if(!lumi_display_visible((uint32_t)tick_started)){
+            bober_orientation_pause(&orientation);
+            if(display_on){if(backlight)bl_write(0x0e,0);lcd_cmd(0x28);lcd_cmd(0x10);delay_ms(120);display_on=false;ESP_LOGI(TAG,"Display timeout: off after 60 s");}
+            delay_ms(50);continue;
+        }
         bool waking=!display_on;
         if(waking){lcd_cmd(0x11);delay_ms(120);lcd_cmd(0x29);delay_ms(10);}
         int16_t ax,ay,az;
@@ -395,6 +401,10 @@ void bober_screen_task(void *arg)
             if(!screen_off){if(backlight)bl_write(0x0e,0);lcd_cmd(0x28);lcd_cmd(0x10);delay_ms(120);screen_off=true;}
             bober_power_checkpoint(BOBER_POWER_SCREEN);
             delay_ms(20);continue;
+        }
+        if(!lumi_display_visible((uint32_t)bober_now_ms())){
+            if(!screen_off){if(backlight)bl_write(0x0e,0);lcd_cmd(0x28);lcd_cmd(0x10);delay_ms(120);screen_off=true;ESP_LOGI(TAG,"Display timeout: off after 60 s");}
+            delay_ms(50);continue;
         }
         if(screen_off){lcd_cmd(0x11);delay_ms(120);lcd_cmd(0x29);if(backlight)bl_write(0x0e,0xff);screen_off=false;prev=-1;}
         int state;
