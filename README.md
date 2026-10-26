@@ -68,7 +68,7 @@ Prototyp hostowy toru WAV → polska transkrypcja → Sol 6.1 Ultrafast → obec
 Lumi opisuje [instrukcja eksperymentu](firmware/experiments/sol-ultrafast.md).
 Na tej gałęzi jest też opcjonalny firmware USB `LUMI_SOL_ULTRAFAST`: Realtime
 obsługuje ASR/VAD, Sol generuje odpowiedzi. Domyślny build źródeł bez tej flagi używa standardowego backendu Realtime.
-Gotowa paczka na tej gałęzi zawiera wariant Sol `2.11.0-archive`.
+Gotowa paczka na tej gałęzi zawiera wariant Sol `2.11.1-diverse`.
 
 ## Pakowanie firmware
 
