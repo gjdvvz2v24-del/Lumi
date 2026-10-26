@@ -510,7 +510,7 @@ Boot reported the new version, Wi-Fi ready and no panic. The prior physical
 for the unchanged archive/display code; the expanded topics were tested without
 additional paid song generations.
 
-## Songs requested in context (2.12.0-requested, prepared)
+## Songs requested in context (2.12.0-requested, deployed)
 
 Removed the random topic/setting/story generator. Sol now calls `play_song` with
 `prompt` (self-contained brief from Zosia's request and relevant conversation,
@@ -521,3 +521,13 @@ never sends unrelated conversation. The firmware passes that brief to Music.
 An unspecified style is selected locally from 16 cheerful genres. Explicit
 style/mood overrides that fallback. Duration, cached announcement, WAV Assets
 archive and display timeout remain unchanged. No new paid model call is added.
+
+Validation: native request/payload, real C Sol parser-to-Music brief and full
+60-second PCM/archive-capture tests passed, as did the ESP-IDF build. Two live
+Sol Ultrafast calls with synthetic conversation history resolved "that trip"
+into the earlier lake/bicycles/kite details. With no requested genre, style was
+empty; with an explicit request it was "spokojny jazz". These tests did not call
+Music or generate another song. App-only USB flash verified SHA-256
+`505d1e2c128fb80549f637177b2fe1f22e47ac995a5aa441c4fa7023fc6721b3`;
+protected partitions and promptfs were identical before/after. Boot confirmed
+2.12.0-requested, Wi-Fi ready and no panic. Archive/display code is unchanged.
