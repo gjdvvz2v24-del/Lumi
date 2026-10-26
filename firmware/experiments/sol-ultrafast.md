@@ -490,7 +490,7 @@ Boot confirmed 2.11.0-archive, Wi-Fi ready and no panic. Hardware logged display
 timeout and a button-only display wake with the conversation still active.
 User confirmed the image returned on the short press. Host Assets test saved
 `Lumi-test-archive-30s.wav` and downloaded identical bytes; the file is visible
-in Zasoby > Przesłane pliki. Physical new-song archive test is in progress.
+in Zasoby > Przesłane pliki. Physical archive test succeeded: Atom uploaded asset `eMjvvQkakIOmS4nQ4hrO`; downloading it verified a 60.0 s mono PCM16 WAV at 16 kHz, exactly 1,920,044 bytes. It is visible in Zasoby > Przesłane pliki. The speaker drained and the microphone returned to listening.
 
 ### More varied songs (2.11.1-diverse)
 

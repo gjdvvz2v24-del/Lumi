@@ -39,7 +39,8 @@ static inline cJSON *lumi_music_payload(uint32_t random){
   if(!seen)break;
   topic=(topic+17)%64;
  }
- for(unsigned i=5;i>0;i--)recent[i]=recent[i-1];recent[0]=topic;if(count<6)count++;
+ for(unsigned i=5;i>0;i--){recent[i]=recent[i-1];}
+ recent[0]=topic;if(count<6)count++;
  char prompt[1200];
  snprintf(prompt,sizeof(prompt),"An original complete 60-second song. Subject: %s. Setting: %s. Narrative angle: %s. Genre: %s. Mood: %s. Make the subject the focus, with specific fresh details and a clear little story. Clear expressive female vocals singing entirely new Polish lyrics, with musical accompaniment, suitable for children. Start singing promptly and finish musically within 60 seconds. Invent all lyrics; no quotations or imitation of artists. Do not fall back to generic songs about penguins or axolotls.",topics[topic],settings[(random/1024)%16],angles[(random/16384)%16],styles[(random/64)%16],moods[(random/262144)%8]);
  cJSON *j=cJSON_CreateObject();if(!j)return NULL;
