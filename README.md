@@ -60,15 +60,15 @@ Po starcie Lumi czeka na hasło „Hej Lumi”, „Luuu-miiii” lub mocne potrz
 
 Aktualny prompt wymaga krótkiej, prostej rozmowy bez nieproszonych porad, komentarzy do emocji, schlebiania i uzasadniania własnych reakcji. Użytkownik potwierdził poprawę stylu 24.10.2026.
 
-Modele wybudzania są eksperymentalne; skuteczność dla różnych osób nie jest gwarantowana. Instrukcję śpiewu usunięto z promptu. W kodzie pozostała obsługa tagów śpiewu z wersji 2.9.3, lecz nie potwierdzono satysfakcjonującego śpiewu.
+Modele wybudzania są eksperymentalne; skuteczność dla różnych osób nie jest gwarantowana. W wariancie Sol prośba o zaśpiewanie czegoś lub piosenkę wywołuje ElevenLabs Music: losowy temat i styl, nowy polski tekst, wokal i akompaniament, 30 sekund. To oddzielny generator muzyki, bez gwarancji głosu używanego w TTS. Zwykła rozmowa o piosenkach nie powinna uruchamiać generowania.
 
 ## Eksperyment Sol Ultrafast
 
 Prototyp hostowy toru WAV → polska transkrypcja → Sol 6.1 Ultrafast → obecny głos
 Lumi opisuje [instrukcja eksperymentu](firmware/experiments/sol-ultrafast.md).
 Na tej gałęzi jest też opcjonalny firmware USB `LUMI_SOL_ULTRAFAST`: Realtime
-obsługuje ASR/VAD, Sol generuje odpowiedzi. Domyślny build i gotowa paczka nadal
-używają standardowego backendu Realtime.
+obsługuje ASR/VAD, Sol generuje odpowiedzi. Domyślny build źródeł bez tej flagi używa standardowego backendu Realtime.
+Gotowa paczka na tej gałęzi zawiera wariant Sol `2.10.0-music`.
 
 ## Pakowanie firmware
 

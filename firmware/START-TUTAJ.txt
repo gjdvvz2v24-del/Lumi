@@ -1,8 +1,13 @@
-Lumi 2.9.3
+Lumi 2.10.0-music — eksperymentalny Sol Ultrafast
 
 Po rozpakowaniu zawsze otwórz katalog firmware.
-Wgrywanie z tego katalogu: bash dist/flash_prebuilt.sh /dev/cu.usbmodem1101
+Wgrywanie: bash dist/flash_prebuilt.sh /dev/cu.usbmodem1101
+Skrypt sprawdza partycje i zapisuje aplikację oraz promptfs; nie zapisuje NVS.
 
-Prompt zawiera ostatnie zmiany użytkownika, bez akapitu o śpiewie.
-Aplikacja pozostaje w wersji 2.9.3; aktualizacja dotyczy promptfs i układu paczki.
-Ponowne pakowanie: python3 tools/package_firmware.py /ścieżka/do/przygotowanego/wydania /ścieżka/do/wyniku.zip
+Gotowa aplikacja: Realtime ASR/VAD + Sol Ultrafast + ElevenLabs TTS.
+Na prośbę o zaśpiewanie lub piosenkę: losowy utwór Eleven Music, 30 sekund.
+Wymaga dotychczasowego klucza ElevenLabs z uprawnieniem Music.
+Klucze OpenAI Realtime i Responses/Sol są osobne, zapisane w NVS.
+Bez Wi-Fi: krótkie lokalne chrapnięcie co 5 sekund.
+Kod źródłowy wymaga -DLUMI_SOL_ULTRAFAST=ON dla tego wariantu.
+Dokumentacja: experiments/sol-ultrafast.md.
