@@ -462,7 +462,7 @@ The Music upload endpoint is also for editing and charges the same as generation
 no upload or repeated full-length generation was used as a saving workaround.
 The current firmware streams and plays songs; it does not retain song files.
 
-## Automatic Assets archive + display timeout (2.11.0-archive, prepared)
+## Automatic Assets archive + display timeout (2.11.0-archive, deployed)
 
 Every complete song is captured as 16 kHz mono PCM16 WAV (60 s = 1,920,044 bytes)
 and uploaded with `POST /v1/assets` under a timestamp/unique name `Lumi-...-60s.wav`.
@@ -481,3 +481,13 @@ wakes only the display for another 60 s; it does not restart the conversation.
 While the display is on, short-press restart and long-press sleep remain available.
 Audio, Wi-Fi and motion do not wake the display. Both animation and fallback status
 paths honour the timeout. A restart starts a fresh 60 s window.
+
+Native archive, full 60 s capture, display/button routing and Sol history tests
+passed, as did the full ESP-IDF build. App-only USB flash verified SHA-256
+`a77fa283288a9d16eb19cce1cb09a21933cd174289d5ea28b1e676eb52dc7f02`;
+NVS/partition/PHY and promptfs compared identical before and after.
+Boot confirmed 2.11.0-archive, Wi-Fi ready and no panic. Hardware logged display
+timeout and a button-only display wake with the conversation still active.
+User confirmed the image returned on the short press. Host Assets test saved
+`Lumi-test-archive-30s.wav` and downloaded identical bytes; the file is visible
+in Zasoby > Przesłane pliki. Physical new-song archive test is in progress.
